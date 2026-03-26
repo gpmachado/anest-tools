@@ -504,13 +504,24 @@ function updateTimeDisplay(phase){
   const startEl = document.getElementById(phase+'-start');
   const dur     = getDur(phase);
   const endTime = addMinutes(startEl.value, dur);
-  const colorId = phase === 's' ? 'sat-val' : 'man-val';
 
   document.getElementById(phase+'-display-start').textContent = startEl.value || '—';
   document.getElementById(phase+'-end-display').textContent   = endTime;
   document.getElementById(phase+'-dur-val').textContent       = dur;
 
   updateSliderFill(document.getElementById(phase+'-dur-slide'));
+
+  // propaga fim da saturação como início da manutenção automaticamente
+  if(phase === 's' && startEl.value){
+    const mStart = document.getElementById('m-start');
+    mStart.value = endTime;
+    document.getElementById('m-display-start').textContent = endTime;
+    // recalcula fim da manutenção com novo início
+    const mDur = getDur('m');
+    const mEnd = addMinutes(endTime, mDur);
+    document.getElementById('m-end-display').textContent = mEnd;
+    updateSliderFill(document.getElementById('m-dur-slide'));
+  }
 }
 
 function mlLiq(c,f,d,factor){ return (c/100)*f*d*1000/factor; }
