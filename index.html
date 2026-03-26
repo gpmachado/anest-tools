@@ -27,6 +27,28 @@
     --red:#f85149;   --red-dim:rgba(248,81,73,0.10);
     --r:12px; --rs:8px;
   }
+  @media (prefers-color-scheme: light){
+    :root {
+      --bg:#f5f5f7; --surface:#ffffff; --surface2:#f0f0f2;
+      --border:rgba(0,0,0,0.08); --text:#1c1c1e; --muted:#6e6e73;
+      --amber:#b97200; --amber-dim:rgba(185,114,0,0.10);
+      --teal:#1a7f37;  --teal-dim:rgba(26,127,55,0.10);
+      --blue:#0051d5;  --blue-dim:rgba(0,81,213,0.10);
+      --red:#c0392b;   --red-dim:rgba(192,57,43,0.10);
+    }
+    input[type=range]:not(.dur-slide){ background:#dcdce0; }
+    .dur-slide.sat-ds{ background:linear-gradient(to right, #b97200 0%, #b97200 var(--pct,40%), #dcdce0 var(--pct,40%), #dcdce0 100%) !important; }
+    .dur-slide.man-ds{ background:linear-gradient(to right, #1a7f37 0%, #1a7f37 var(--pct,17%), #dcdce0 var(--pct,17%), #dcdce0 100%) !important; }
+    .sat-ds::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
+    .man-ds::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
+    .sat-range::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
+    .man-range::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
+    .cfg-range::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
+    header{ border-bottom-color:rgba(0,0,0,0.1); }
+    .total-card{ border-color:rgba(0,81,213,0.2); }
+    .time-start-row input[type=time]{ border-bottom-color:rgba(0,0,0,0.15); color:#1c1c1e; }
+    .time-start-row input[type=time]::-webkit-calendar-picker-indicator{ filter:none; }
+  }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   body{
     font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;
@@ -528,7 +550,22 @@ function mlLiq(c,f,d,factor){ return (c/100)*f*d*1000/factor; }
 
 let chartInst = null;
 
+function getTheme(){
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return {
+    amber:      dark ? 'rgba(240,167,66,0.75)'  : 'rgba(185,114,0,0.75)',
+    teal:       dark ? 'rgba(63,185,80,0.75)'   : 'rgba(26,127,55,0.75)',
+    blue:       dark ? '#58a6ff'                : '#0051d5',
+    blueFill:   dark ? 'rgba(88,166,255,0.07)'  : 'rgba(0,81,213,0.07)',
+    gridLine:   dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)',
+    borderLine: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)',
+    tickColor:  dark ? '#7d8590'                : '#6e6e73',
+    blueAxis:   dark ? 'rgba(88,166,255,0.2)'   : 'rgba(0,81,213,0.2)',
+  };
+}
+
 function buildChart(sC,sF,sD,mC,mF,mD,factor){
+  const t = getTheme();
   const totalMin = sD+mD;
   const step = Math.max(1, Math.round(totalMin/40));
   const labels=[],satData=[],manData=[],cumData=[];
@@ -568,9 +605,9 @@ function buildChart(sC,sF,sD,mC,mF,mD,factor){
         }
       },
       scales:{
-        x:{stacked:true,ticks:{color:'#7d8590',font:{size:10},maxTicksLimit:8},grid:{color:'rgba(255,255,255,.04)'},border:{color:'rgba(255,255,255,.06)'}},
-        y:{stacked:true,ticks:{color:'#7d8590',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},border:{color:'rgba(255,255,255,.06)'},title:{display:true,text:'mL/intervalo',color:'#7d8590',font:{size:10}}},
-        y2:{position:'right',ticks:{color:'#58a6ff',font:{size:10}},grid:{display:false},border:{color:'rgba(88,166,255,.2)'},title:{display:true,text:'acumulado (mL)',color:'#58a6ff',font:{size:10}}}
+        x:{stacked:true,ticks:{color:t.tickColor,font:{size:10},maxTicksLimit:8},grid:{color:t.gridLine},border:{color:t.borderLine}},
+        y:{stacked:true,ticks:{color:t.tickColor,font:{size:10}},grid:{color:t.gridLine},border:{color:t.borderLine},title:{display:true,text:'mL/intervalo',color:t.tickColor,font:{size:10}}},
+        y2:{position:'right',ticks:{color:t.blue,font:{size:10}},grid:{display:false},border:{color:t.blueAxis},title:{display:true,text:'acumulado (mL)',color:t.blue,font:{size:10}}}
       }
     }
   });
@@ -623,6 +660,7 @@ function calc(){
   buildChart(sC,sF,sD,mC,mF,mD,factor);
 }
 
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', calc);
 /* listeners */
 ['s-conc','s-flow','m-conc','m-flow','temp'].forEach(id=>
   document.getElementById(id).addEventListener('input',calc)
