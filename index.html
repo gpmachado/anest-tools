@@ -2,676 +2,2101 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Anest">
-<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-title" content="DrugCalc">
+<meta name="theme-color" content="#0d0f18" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f0f3fa" media="(prefers-color-scheme: light)">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>Anest Tools</title>
-<script>
-  if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('/anest-tools/sw.js');
-    });
-  }
-</script>
+<title>DrugCalc — Anestesia & UTI</title>
 <style>
+:root {
+  --bg: #0d0f18;
+  --surface: #161924;
+  --card: #1e2235;
+  --border: #2a2f4a;
+  --accent: #4d8ef7;
+  --green: #35c47a;
+  --yellow: #f4c430;
+  --red: #e05050;
+  --orange: #f08040;
+  --purple: #8b68d4;
+  --teal: #3bbfc4;
+  --text: #eaecf5;
+  --muted: #7a85a0;
+  --r: 14px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --nav-bg: rgba(13,15,24,0.96);
+  --topbar-bg: rgba(13,15,24,0.92);
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+
+@media (prefers-color-scheme: light) {
   :root {
-    --bg:#0d1117; --surface:#161b22; --surface2:#21262d;
-    --border:rgba(255,255,255,0.08); --text:#e6edf3; --muted:#7d8590;
-    --amber:#f0a742; --amber-dim:rgba(240,167,66,0.13);
-    --teal:#3fb950;  --teal-dim:rgba(63,185,80,0.12);
-    --blue:#58a6ff;  --blue-dim:rgba(88,166,255,0.12);
-    --red:#f85149;   --red-dim:rgba(248,81,73,0.10);
-    --r:12px; --rs:8px;
+    --bg: #f0f3fa;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --border: #d8ddf0;
+    --accent: #2d72e8;
+    --green: #1f9e5f;
+    --yellow: #b58a00;
+    --red: #c83232;
+    --orange: #c0601a;
+    --purple: #6b46c1;
+    --teal: #0e8f95;
+    --text: #0f1220;
+    --muted: #5a6480;
+    --nav-bg: rgba(255,255,255,0.96);
+    --topbar-bg: rgba(240,243,250,0.94);
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
-  @media (prefers-color-scheme: light){
-    :root {
-      --bg:#f5f5f7; --surface:#ffffff; --surface2:#f0f0f2;
-      --border:rgba(0,0,0,0.08); --text:#1c1c1e; --muted:#6e6e73;
-      --amber:#b97200; --amber-dim:rgba(185,114,0,0.10);
-      --teal:#1a7f37;  --teal-dim:rgba(26,127,55,0.10);
-      --blue:#0051d5;  --blue-dim:rgba(0,81,213,0.10);
-      --red:#c0392b;   --red-dim:rgba(192,57,43,0.10);
-    }
-    input[type=range]:not(.dur-slide){ background:#dcdce0; }
-    .dur-slide.sat-ds{ background:linear-gradient(to right, #b97200 0%, #b97200 var(--pct,40%), #dcdce0 var(--pct,40%), #dcdce0 100%) !important; }
-    .dur-slide.man-ds{ background:linear-gradient(to right, #1a7f37 0%, #1a7f37 var(--pct,17%), #dcdce0 var(--pct,17%), #dcdce0 100%) !important; }
-    .sat-ds::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
-    .man-ds::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
-    .sat-range::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
-    .man-range::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
-    .cfg-range::-webkit-slider-thumb{ border-color:#f5f5f7 !important; }
-    header{ border-bottom-color:rgba(0,0,0,0.1); }
-    .total-card{ border-color:rgba(0,81,213,0.2); }
-    .time-start-row input[type=time]{ border-bottom-color:rgba(0,0,0,0.15); color:#1c1c1e; }
-    .time-start-row input[type=time]::-webkit-calendar-picker-indicator{ filter:none; }
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{
-    font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;
-    background:var(--bg);color:var(--text);
-    min-height:100dvh;padding-bottom:env(safe-area-inset-bottom,24px);
-    font-size:15px;
-  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'SF Pro Display', BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+  padding-top: var(--safe-top);
+}
 
-  /* ── header ── */
-  header{
-    padding:16px 18px 13px;border-bottom:1px solid var(--border);
-    display:flex;align-items:center;justify-content:space-between;
-    position:sticky;top:0;background:var(--bg);z-index:10;
-  }
-  header h1{font-size:17px;font-weight:600;letter-spacing:-.02em;}
-  header .sub{font-size:11px;color:var(--muted);margin-top:2px;}
+/* ── TOP BAR ── */
+.topbar {
+  position: sticky;
+  top: 0;
+  top: var(--safe-top);
+  z-index: 100;
+  background: var(--topbar-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
+.topbar h1 span { color: var(--accent); }
+.topbar .sub { font-size: 0.7rem; color: var(--muted); }
 
-  /* ── agent tabs ── */
-  .agent-tabs{
-    display:flex;gap:6px;padding:11px 18px 0;
-    overflow-x:auto;scrollbar-width:none;
-  }
-  .agent-tabs::-webkit-scrollbar{display:none;}
-  .tab-btn{
-    font-size:12px;padding:5px 14px;border-radius:20px;
-    border:1px solid var(--border);background:transparent;
-    color:var(--muted);cursor:pointer;white-space:nowrap;
-    font-family:inherit;flex-shrink:0;transition:all .15s;
-  }
-  .tab-btn.active{background:var(--blue-dim);border-color:rgba(88,166,255,.3);color:var(--blue);}
+/* ── PATIENT PANEL ── */
+.patient-panel {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+}
+.patient-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.patient-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.imc-box {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.imc-val {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.imc-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.imc-normal { color: var(--green); border-color: rgba(53,196,122,0.35); background: rgba(53,196,122,0.08); }
+.imc-low    { color: var(--accent); border-color: rgba(77,142,247,0.35); background: rgba(77,142,247,0.08); }
+.imc-over   { color: var(--yellow); border-color: rgba(244,196,48,0.35); background: rgba(244,196,48,0.08); }
+.imc-obese  { color: var(--orange); border-color: rgba(240,128,64,0.35); background: rgba(240,128,64,0.08); }
+.imc-mobese { color: var(--red); border-color: rgba(224,80,80,0.35); background: rgba(224,80,80,0.08); }
 
-  /* ── layout ── */
-  .scroll-area{padding:12px 18px;display:flex;flex-direction:column;gap:10px;}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+/* sex toggle */
+.sex-toggle {
+  display: flex;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 40px;
+}
+.sex-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sex-btn.active { background: var(--accent); color: #fff; }
 
-  /* ── card header ── */
-  .card-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
-  .phase-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-  .dot-sat{background:var(--amber);}
-  .dot-man{background:var(--teal);}
-  .dot-cfg{background:var(--blue);}
-  .card-header h2{font-size:13px;font-weight:500;flex:1;}
-  .badge{font-size:10px;padding:2px 9px;border-radius:20px;}
-  .badge-sat{background:var(--amber-dim);color:var(--amber);}
-  .badge-man{background:var(--teal-dim);color:var(--teal);}
-  .badge-cfg{background:var(--blue-dim);color:var(--blue);}
+/* weight grid */
+.weight-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+.wbox {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: center;
+}
+.wbox-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.wbox-val {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.wbox-unit { font-size: 0.6rem; color: var(--muted); font-weight: 500; }
+.wbox.active-w { border-color: rgba(77,142,247,0.5); }
 
-  /* ── time block ── */
-  .time-block{
-    background:var(--surface2);border-radius:var(--rs);
-    padding:12px 14px;margin-bottom:14px;
-  }
-  .time-start-row{
-    display:flex;align-items:center;gap:10px;margin-bottom:14px;
-  }
-  .time-start-row label{font-size:12px;color:var(--muted);flex-shrink:0;}
-  .time-start-row input[type=time]{
-    background:transparent;border:none;border-bottom:1px solid var(--border);
-    color:var(--text);font-size:20px;font-weight:600;
-    font-family:'SF Mono',monospace;padding:2px 4px;
-    -webkit-appearance:none;width:110px;
-  }
-  .time-start-row input[type=time]::-webkit-calendar-picker-indicator{
-    filter:invert(.5);cursor:pointer;
-  }
+/* weight type badge on drug cards */
+.wtype-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(77,142,247,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(77,142,247,0.25);
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.3px;
+}
+.field label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.field input, .field select {
+  width: 100%;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 9px 12px;
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field select option { background: var(--card); }
+.badge-weight {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+.badge-weight small { font-size: 0.65rem; color: var(--muted); font-weight: 500; margin-left: 3px; }
 
-  /* slider de duração grande */
-  .dur-slider-wrap{position:relative;padding-bottom:20px;}
+/* ── TABS (bottom nav) ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  padding-bottom: var(--safe-bottom);
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  z-index: 100;
+}
+.bottom-nav::-webkit-scrollbar { display: none; }
+.nav-btn {
+  flex: 0 0 auto;
+  min-width: 64px;
+  padding: 10px 8px 8px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: color 0.15s;
+}
+.nav-btn .icon { font-size: 1.25rem; line-height: 1; }
+.nav-btn.active { color: var(--accent); }
 
-  input.dur-slide{
-    -webkit-appearance:none;width:100%;height:6px;
-    border-radius:3px;outline:none;
-  }
-  input.dur-slide.sat-ds{
-    background:linear-gradient(to right, var(--amber) 0%, var(--amber) var(--pct,40%), #21262d var(--pct,40%), #21262d 100%);
-  }
-  input.dur-slide.sat-ds::-webkit-slider-thumb{
-    -webkit-appearance:none;width:32px;height:32px;border-radius:50%;
-    background:var(--amber);cursor:pointer;border:4px solid var(--surface);
-  }
-  input.dur-slide.man-ds{
-    background:linear-gradient(to right, var(--teal) 0%, var(--teal) var(--pct,17%), #21262d var(--pct,17%), #21262d 100%);
-  }
-  input.dur-slide.man-ds::-webkit-slider-thumb{
-    -webkit-appearance:none;width:32px;height:32px;border-radius:50%;
-    background:var(--teal);cursor:pointer;border:4px solid var(--surface);
-  }
+/* ── CONTENT ── */
+.content {
+  padding: 16px 14px;
+  padding-bottom: calc(72px + var(--safe-bottom) + 16px);
+  max-width: 640px;
+  margin: 0 auto;
+}
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
 
-  .dur-ticks{
-    display:flex;justify-content:space-between;
-    font-size:10px;color:var(--muted);margin-top:6px;
-  }
+/* ── SECTION HEADER ── */
+.sec-hdr {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 20px 0 10px 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sec-hdr::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 2px;
+}
 
-  /* hora fim display */
-  .time-result{
-    display:flex;align-items:center;justify-content:space-between;
-    margin-top:14px;
-  }
-  .time-result .end-block{text-align:center;}
-  .time-result .end-label{font-size:11px;color:var(--muted);margin-bottom:2px;}
-  .time-result .end-time{
-    font-size:32px;font-weight:700;font-family:'SF Mono',monospace;
-    font-variant-numeric:tabular-nums;line-height:1;
-  }
-  .time-result .arrow{font-size:20px;color:var(--muted);padding:0 8px;}
-  .time-result .dur-block{text-align:center;}
-  .time-result .dur-label{font-size:11px;color:var(--muted);margin-bottom:2px;}
-  .time-result .dur-val{
-    font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;
-  }
-  .time-result .dur-unit{font-size:13px;font-weight:400;color:var(--muted);margin-left:2px;}
+/* ── DRUG CARD ── */
+.drug-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.drug-header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.drug-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.drug-subtitle {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+.drug-conc {
+  font-size: 0.68rem;
+  color: var(--muted);
+  background: rgba(255,255,255,0.05);
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
-  /* ── param sliders ── */
-  .slider-group{display:flex;flex-direction:column;gap:12px;}
-  .slider-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;}
-  .slider-label{font-size:12px;color:var(--muted);margin-bottom:5px;}
-  input[type=range]:not(.dur-slide){
-    -webkit-appearance:none;width:100%;height:3px;
-    border-radius:2px;background:var(--surface2);outline:none;
-  }
-  .sat-range::-webkit-slider-thumb{
-    -webkit-appearance:none;width:26px;height:26px;border-radius:50%;
-    background:var(--amber);cursor:pointer;border:3px solid var(--surface);
-  }
-  .man-range::-webkit-slider-thumb{
-    -webkit-appearance:none;width:26px;height:26px;border-radius:50%;
-    background:var(--teal);cursor:pointer;border:3px solid var(--surface);
-  }
-  .cfg-range::-webkit-slider-thumb{
-    -webkit-appearance:none;width:26px;height:26px;border-radius:50%;
-    background:var(--blue);cursor:pointer;border:3px solid var(--surface);
-  }
-  .sat-range{accent-color:var(--amber);}
-  .man-range{accent-color:var(--teal);}
-  .cfg-range{accent-color:var(--blue);}
-  .slider-val{font-size:13px;font-weight:600;min-width:76px;text-align:right;}
-  .sat-val{color:var(--amber);}
-  .man-val{color:var(--teal);}
-  .total-val{color:var(--blue);}
+/* mode toggle */
+.mode-toggle {
+  display: flex;
+  margin: 0 14px 12px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+.mode-btn {
+  flex: 1;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mode-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
 
-  /* ── metrics ── */
-  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;}
-  .metric{background:var(--surface2);border-radius:var(--rs);padding:9px 7px;text-align:center;}
-  .metric-val{font-size:17px;font-weight:700;line-height:1;margin-bottom:3px;font-variant-numeric:tabular-nums;}
-  .metric-label{font-size:10px;color:var(--muted);line-height:1.3;}
+/* dose table */
+.dose-table {
+  padding: 0 14px 14px;
+}
+.dose-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.dose-row:last-child { border-bottom: none; }
+.dose-label { font-size: 0.78rem; color: var(--muted); }
+.dose-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.dose-unit { font-size: 0.7rem; font-weight: 500; color: var(--muted); margin-left: 2px; }
 
-  /* ── total ── */
-  .total-card{
-    background:var(--blue-dim);border:1px solid rgba(88,166,255,.2);
-    border-radius:var(--r);padding:14px 16px;
-    display:flex;align-items:center;gap:14px;
-  }
-  .total-number{font-size:46px;font-weight:700;color:var(--blue);line-height:1;font-variant-numeric:tabular-nums;}
-  .total-meta p{font-size:11px;color:var(--muted);margin-bottom:3px;}
-  .total-meta strong{font-size:14px;font-weight:400;color:var(--text);}
-  .split-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
-  .split-item{border-radius:var(--rs);padding:10px 12px;}
-  .split-sat{background:var(--amber-dim);}
-  .split-man{background:var(--teal-dim);}
-  .s-label{font-size:11px;margin-bottom:2px;}
-  .s-val{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
-  .s-unit{font-size:11px;}
-  .split-sat .s-label,.split-sat .s-val,.split-sat .s-unit{color:var(--amber);}
-  .split-man .s-label,.split-man .s-val,.split-man .s-unit{color:var(--teal);}
+/* infusion table */
+.inf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  margin: 0 0 4px;
+}
+.inf-table th {
+  padding: 6px 8px;
+  text-align: left;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+.inf-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.035);
+  color: var(--text);
+}
+.inf-table tr:last-child td { border-bottom: none; }
+.inf-table .hl { font-weight: 800; color: var(--accent); font-size: 0.9rem; }
+.inf-table .muted { color: var(--muted); font-size: 0.72rem; }
 
-  .factor-card{
-    background:var(--surface2);border-radius:var(--rs);
-    padding:9px 12px;margin-top:8px;
-    display:flex;align-items:center;gap:10px;
-  }
-  .factor-card span{font-size:12px;color:var(--muted);flex:1;}
-  .factor-val{font-size:13px;font-weight:600;color:var(--blue);font-variant-numeric:tabular-nums;}
+.dilution-note {
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: rgba(255,255,255,0.03);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin: 0 14px 12px;
+  line-height: 1.55;
+}
+.dilution-note strong { color: var(--text); }
 
-  /* ── chart ── */
-  .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
-  .chart-title{font-size:11px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.05em;}
-  .chart-title::after{content:'';flex:1;height:1px;background:var(--border);}
-  canvas{width:100%!important;}
-  .legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;}
-  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
-  .legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 14px 12px;
+}
+.badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+.bg { background: rgba(53,196,122,0.1); color: var(--green); border-color: rgba(53,196,122,0.25); }
+.bw { background: rgba(244,196,48,0.1); color: var(--yellow); border-color: rgba(244,196,48,0.25); }
+.br { background: rgba(224,80,80,0.1); color: var(--red); border-color: rgba(224,80,80,0.25); }
+.bi { background: rgba(77,142,247,0.1); color: var(--accent); border-color: rgba(77,142,247,0.25); }
 
-  .warn{
-    background:var(--red-dim);border:1px solid rgba(248,81,73,.25);
-    border-radius:var(--rs);padding:9px 12px;font-size:12px;
-    color:var(--red);margin-top:8px;display:none;
-  }
-  .warn.visible{display:block;}
+/* PCR */
+.pcr-card {
+  background: rgba(224,80,80,0.06);
+  border: 1px solid rgba(224,80,80,0.2);
+  border-radius: var(--r);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.pcr-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--red);
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pcr-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.82rem;
+  gap: 12px;
+}
+.pcr-row:last-child { border-bottom: none; }
+.pcr-l { color: var(--muted); flex-shrink: 0; }
+.pcr-v { font-weight: 700; text-align: right; }
 
-  .cfg-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin-bottom:10px;}
-  .cfg-label{font-size:12px;color:var(--muted);}
+/* disclaimer */
+.disclaimer {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: rgba(244,196,48,0.06);
+  border: 1px solid rgba(244,196,48,0.15);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+  text-align: center;
+}
 
-  footer{
-    padding:14px 18px env(safe-area-inset-bottom,20px);
-    font-size:11px;color:var(--muted);text-align:center;
-    border-top:1px solid var(--border);margin-top:4px;line-height:1.7;
-  }
+.no-weight {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.no-weight .icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.4; }
+
+/* ── VOLATILE CALCULATOR ── */
+#tab-vol .v-agent-tabs {
+  display: flex; gap: 6px; padding: 4px 0 12px;
+  overflow-x: auto; scrollbar-width: none;
+}
+#tab-vol .v-agent-tabs::-webkit-scrollbar { display: none; }
+#tab-vol .v-tab-btn {
+  font-size: 12px; padding: 5px 14px; border-radius: 20px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer; white-space: nowrap;
+  font-family: inherit; flex-shrink: 0; transition: all .15s;
+}
+#tab-vol .v-tab-btn.active { background: rgba(77,142,247,0.12); border-color: rgba(77,142,247,.3); color: var(--accent); }
+#tab-vol .v-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px; margin-bottom: 10px;
+}
+#tab-vol .v-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+#tab-vol .v-phase-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+#tab-vol .v-dot-sat { background: var(--yellow); }
+#tab-vol .v-dot-man { background: var(--green); }
+#tab-vol .v-dot-cfg { background: var(--accent); }
+#tab-vol .v-card-header h2 { font-size: 13px; font-weight: 600; flex: 1; color: var(--text); }
+#tab-vol .v-badge { font-size: 10px; padding: 2px 9px; border-radius: 20px; }
+#tab-vol .v-badge-sat { background: rgba(244,196,48,0.1); color: var(--yellow); border: 1px solid rgba(244,196,48,.25); }
+#tab-vol .v-badge-man { background: rgba(53,196,122,0.1); color: var(--green); border: 1px solid rgba(53,196,122,.25); }
+#tab-vol .v-badge-cfg { background: rgba(77,142,247,0.1); color: var(--accent); border: 1px solid rgba(77,142,247,.25); }
+#tab-vol .v-time-block {
+  background: var(--surface); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 14px;
+}
+#tab-vol .v-time-start-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+#tab-vol .v-time-start-row label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+#tab-vol .v-time-start-row input[type=time] {
+  background: transparent; border: none; border-bottom: 1px solid var(--border);
+  color: var(--text); font-size: 20px; font-weight: 600;
+  font-family: 'SF Mono', monospace; padding: 2px 4px;
+  -webkit-appearance: none; width: 110px;
+}
+#tab-vol .v-time-start-row input[type=time]::-webkit-calendar-picker-indicator { filter: invert(.5); cursor: pointer; }
+#tab-vol .v-dur-slider-wrap { position: relative; padding-bottom: 20px; }
+#tab-vol input.v-dur-slide {
+  -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; outline: none;
+}
+#tab-vol input.v-dur-slide.v-sat-ds {
+  background: linear-gradient(to right, var(--yellow) 0%, var(--yellow) var(--pct,40%), var(--border) var(--pct,40%), var(--border) 100%);
+}
+#tab-vol input.v-dur-slide.v-sat-ds::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--yellow); cursor: pointer; border: 4px solid var(--card);
+}
+#tab-vol input.v-dur-slide.v-man-ds {
+  background: linear-gradient(to right, var(--green) 0%, var(--green) var(--pct,17%), var(--border) var(--pct,17%), var(--border) 100%);
+}
+#tab-vol input.v-dur-slide.v-man-ds::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--green); cursor: pointer; border: 4px solid var(--card);
+}
+#tab-vol .v-dur-ticks { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 6px; }
+#tab-vol .v-time-result { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+#tab-vol .v-end-block { text-align: center; }
+#tab-vol .v-end-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+#tab-vol .v-end-time { font-size: 26px; font-weight: 700; font-family: 'SF Mono', monospace; font-variant-numeric: tabular-nums; line-height: 1; }
+#tab-vol .v-arrow { font-size: 16px; color: var(--muted); padding: 0 4px; }
+#tab-vol .v-dur-block { text-align: center; }
+#tab-vol .v-dur-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+#tab-vol .v-dur-val { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+#tab-vol .v-dur-unit { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 2px; }
+#tab-vol .v-slider-group { display: flex; flex-direction: column; gap: 12px; }
+#tab-vol .v-slider-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
+#tab-vol .v-slider-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+#tab-vol input[type=range]:not(.v-dur-slide) {
+  -webkit-appearance: none; width: 100%; height: 3px;
+  border-radius: 2px; background: var(--border); outline: none;
+}
+#tab-vol .v-sat-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--yellow); cursor: pointer; border: 3px solid var(--card);
+}
+#tab-vol .v-man-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--green); cursor: pointer; border: 3px solid var(--card);
+}
+#tab-vol .v-cfg-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); cursor: pointer; border: 3px solid var(--card);
+}
+#tab-vol .v-slider-val { font-size: 13px; font-weight: 600; min-width: 72px; text-align: right; }
+#tab-vol .v-sat-val { color: var(--yellow); }
+#tab-vol .v-man-val { color: var(--green); }
+#tab-vol .v-total-val { color: var(--accent); }
+#tab-vol .v-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-top: 12px; }
+#tab-vol .v-metric { background: var(--surface); border-radius: 10px; padding: 9px 7px; text-align: center; }
+#tab-vol .v-metric-val { font-size: 17px; font-weight: 700; line-height: 1; margin-bottom: 3px; font-variant-numeric: tabular-nums; }
+#tab-vol .v-metric-label { font-size: 10px; color: var(--muted); line-height: 1.3; }
+#tab-vol .v-total-card {
+  background: rgba(77,142,247,0.08); border: 1px solid rgba(77,142,247,.2);
+  border-radius: var(--r); padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
+}
+#tab-vol .v-total-number { font-size: 42px; font-weight: 700; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
+#tab-vol .v-total-meta p { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+#tab-vol .v-total-meta strong { font-size: 14px; font-weight: 400; color: var(--text); }
+#tab-vol .v-split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+#tab-vol .v-split-item { border-radius: 10px; padding: 10px 12px; }
+#tab-vol .v-split-sat { background: rgba(244,196,48,0.1); }
+#tab-vol .v-split-man { background: rgba(53,196,122,0.1); }
+#tab-vol .v-s-label { font-size: 11px; margin-bottom: 2px; }
+#tab-vol .v-s-val { font-size: 22px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+#tab-vol .v-s-unit { font-size: 11px; }
+#tab-vol .v-split-sat .v-s-label, #tab-vol .v-split-sat .v-s-val, #tab-vol .v-split-sat .v-s-unit { color: var(--yellow); }
+#tab-vol .v-split-man .v-s-label, #tab-vol .v-split-man .v-s-val, #tab-vol .v-split-man .v-s-unit { color: var(--green); }
+#tab-vol .v-factor-card {
+  background: var(--surface); border-radius: 10px;
+  padding: 9px 12px; margin-top: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+#tab-vol .v-factor-card span { font-size: 12px; color: var(--muted); flex: 1; }
+#tab-vol .v-factor-val { font-size: 13px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; }
+#tab-vol .v-cfg-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-bottom: 10px; }
+#tab-vol .v-cfg-label { font-size: 12px; color: var(--muted); }
+#tab-vol .v-chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; }
+#tab-vol .v-chart-title { font-size: 11px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: .05em; }
+#tab-vol .v-chart-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+#tab-vol .v-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+#tab-vol .v-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+#tab-vol .v-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+#tab-vol .v-warn {
+  background: rgba(224,80,80,0.08); border: 1px solid rgba(224,80,80,.25);
+  border-radius: 10px; padding: 9px 12px; font-size: 12px;
+  color: var(--red); margin-bottom: 8px; display: none;
+}
+#tab-vol .v-warn.visible { display: block; }
+#tab-vol .v-footer {
+  font-size: 11px; color: var(--muted); text-align: center;
+  border-top: 1px solid var(--border); margin-top: 4px;
+  padding: 14px 0 4px; line-height: 1.7;
+}
 </style>
 </head>
 <body>
 
-<header>
+<div class="topbar">
   <div>
-    <h1>Anestésico volátil</h1>
-    <div class="sub">consumo estimado · bifásico</div>
+    <h1>💊 <span>DrugCalc</span></h1>
+    <div class="sub">Anestesia · Urgência · UTI</div>
   </div>
-</header>
-
-<div class="agent-tabs">
-  <button class="tab-btn active" onclick="setAgent('sevo',this)">Sevorane</button>
-  <button class="tab-btn" onclick="setAgent('iso',this)">Isoflurano</button>
-  <button class="tab-btn" onclick="setAgent('des',this)">Desflurano</button>
-  <button class="tab-btn" onclick="setAgent('halo',this)">Halotano</button>
 </div>
 
-<div class="scroll-area">
-
-  <!-- Config -->
-  <div class="card">
-    <div class="card-header">
-      <div class="phase-dot dot-cfg"></div>
-      <h2>Configuração física</h2>
-      <span class="badge badge-cfg">fórmula real</span>
+<div class="patient-panel">
+  <div class="patient-row">
+    <div class="field">
+      <label>Peso (kg)</label>
+      <input type="number" id="weight" inputmode="decimal" placeholder="70" min="1" max="300" oninput="update()">
     </div>
-    <div class="cfg-row">
-      <div class="cfg-label">Temperatura sala (°C)</div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <input type="range" class="cfg-range" id="temp" min="15" max="30" step="1" value="20" style="width:100px;">
-        <span class="slider-val total-val"><span id="temp-v">20</span>°C</span>
+    <div class="field">
+      <label>Altura (cm)</label>
+      <input type="number" id="height" inputmode="numeric" placeholder="170" min="50" max="250" oninput="update()">
+    </div>
+    <div class="field">
+      <label>Sexo</label>
+      <div class="sex-toggle">
+        <button class="sex-btn active" id="sexM" onclick="setSex('M')">♂ M</button>
+        <button class="sex-btn" id="sexF" onclick="setSex('F')">♀ F</button>
       </div>
-    </div>
-    <div class="factor-card">
-      <span>Fator de vaporização (lei dos gases):</span>
-      <span class="factor-val">1 mL → <span id="factor-v">184</span> mL vapor</span>
     </div>
   </div>
+  <!-- IMC -->
+  <div class="patient-row-2" style="margin-top:10px">
+    <div class="field">
+      <label>IMC</label>
+      <div class="imc-box" id="imc-display">
+        <span class="imc-val" style="color:var(--muted);font-size:0.78rem;font-weight:500">—</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>Idade</label>
+      <input type="number" id="age" inputmode="numeric" placeholder="45" min="1" max="120" oninput="update()">
+    </div>
+  </div>
+  <!-- Pesos -->
+  <div class="weight-grid" id="weight-grid">
+    <div class="wbox"><div class="wbox-label">Real (TBW)</div><div class="wbox-val" id="w-tbw" style="color:var(--text)">—<span class="wbox-unit"></span></div></div>
+    <div class="wbox"><div class="wbox-label">Ideal (IBW)</div><div class="wbox-val" id="w-ibw" style="color:var(--green)">—<span class="wbox-unit"></span></div></div>
+    <div class="wbox"><div class="wbox-label">Corrigido (ABW)</div><div class="wbox-val" id="w-abw" style="color:var(--orange)">—<span class="wbox-unit"></span></div></div>
+    <div class="wbox"><div class="wbox-label">Magro (LBW)</div><div class="wbox-val" id="w-lbw" style="color:var(--purple)">—<span class="wbox-unit"></span></div></div>
+  </div>
+</div>
 
-  <!-- ── SATURAÇÃO ── -->
-  <div class="card">
-    <div class="card-header">
-      <div class="phase-dot dot-sat"></div>
-      <h2>Saturação / indução</h2>
-      <span class="badge badge-sat">FGF alto</span>
+<div class="content">
+  <div class="tab-pane active" id="tab-iot"></div>
+  <div class="tab-pane" id="tab-sed"></div>
+  <div class="tab-pane" id="tab-adj"></div>
+  <div class="tab-pane" id="tab-vaso"></div>
+  <div class="tab-pane" id="tab-al"></div>
+  <div class="tab-pane" id="tab-hid"></div>
+  <div class="tab-pane" id="tab-pcr"></div>
+  <div class="tab-pane" id="tab-vol">
+
+    <!-- Agent tabs -->
+    <div class="v-agent-tabs">
+      <button class="v-tab-btn active" onclick="volSetAgent('sevo',this)">Sevorane</button>
+      <button class="v-tab-btn" onclick="volSetAgent('iso',this)">Isoflurano</button>
+      <button class="v-tab-btn" onclick="volSetAgent('des',this)">Desflurano</button>
+      <button class="v-tab-btn" onclick="volSetAgent('halo',this)">Halotano</button>
     </div>
 
-    <div class="time-block">
-      <div class="time-start-row">
-        <label>Início</label>
-        <input type="time" id="s-start" value="08:00">
+    <!-- Config -->
+    <div class="v-card">
+      <div class="v-card-header">
+        <div class="v-phase-dot v-dot-cfg"></div>
+        <h2>Configuração física</h2>
+        <span class="v-badge v-badge-cfg">fórmula real</span>
       </div>
-
-      <div class="dur-slider-wrap">
-        <input type="range" class="dur-slide sat-ds" id="s-dur-slide"
-               min="1" max="30" step="1" value="5"
-               style="--pct:13.3%">
-        <div class="dur-ticks">
-          <span>1min</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30min</span>
+      <div class="v-cfg-row">
+        <div class="v-cfg-label">Temperatura sala (°C)</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="range" class="v-cfg-range" id="vol-temp" min="15" max="30" step="1" value="20" style="width:100px;" oninput="volCalc()">
+          <span class="v-slider-val v-total-val"><span id="vol-temp-v">20</span>°C</span>
         </div>
       </div>
+      <div class="v-factor-card">
+        <span>Fator de vaporização (lei dos gases):</span>
+        <span class="v-factor-val">1 mL → <span id="vol-factor-v">184</span> mL vapor</span>
+      </div>
+    </div>
 
-      <div class="time-result">
-        <div class="end-block">
-          <div class="end-label">início</div>
-          <div class="end-time sat-val" id="s-display-start">08:00</div>
+    <!-- Saturação -->
+    <div class="v-card">
+      <div class="v-card-header">
+        <div class="v-phase-dot v-dot-sat"></div>
+        <h2>Saturação / indução</h2>
+        <span class="v-badge v-badge-sat">FGF alto</span>
+      </div>
+      <div class="v-time-block">
+        <div class="v-time-start-row">
+          <label>Início</label>
+          <input type="time" id="vol-s-start" value="08:00" onchange="volCalc()">
         </div>
-        <div class="arrow">→</div>
-        <div class="end-block">
-          <div class="end-label">fim estimado</div>
-          <div class="end-time sat-val" id="s-end-display">08:05</div>
+        <div class="v-dur-slider-wrap">
+          <input type="range" class="v-dur-slide v-sat-ds" id="vol-s-dur-slide"
+                 min="1" max="30" step="1" value="5" style="--pct:13.3%" oninput="volCalc()">
+          <div class="v-dur-ticks">
+            <span>1min</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30min</span>
+          </div>
         </div>
-        <div class="arrow">=</div>
-        <div class="dur-block">
-          <div class="dur-label">duração</div>
-          <div class="dur-val sat-val">
-            <span id="s-dur-val">5</span><span class="dur-unit">min</span>
+        <div class="v-time-result">
+          <div class="v-end-block">
+            <div class="v-end-label">início</div>
+            <div class="v-end-time v-sat-val" id="vol-s-display-start">08:00</div>
+          </div>
+          <div class="v-arrow">→</div>
+          <div class="v-end-block">
+            <div class="v-end-label">fim estimado</div>
+            <div class="v-end-time v-sat-val" id="vol-s-end-display">08:05</div>
+          </div>
+          <div class="v-arrow">=</div>
+          <div class="v-dur-block">
+            <div class="v-dur-label">duração</div>
+            <div class="v-dur-val v-sat-val"><span id="vol-s-dur-val">5</span><span class="v-dur-unit">min</span></div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-row">
-        <div>
-          <div class="slider-label">Concentração</div>
-          <input type="range" class="sat-range" id="s-conc" min="1" max="8" step="0.5" value="6">
+      <div class="v-slider-group">
+        <div class="v-slider-row">
+          <div>
+            <div class="v-slider-label">Concentração</div>
+            <input type="range" class="v-sat-range" id="vol-s-conc" min="1" max="8" step="0.5" value="6" oninput="volCalc()">
+          </div>
+          <div class="v-slider-val v-sat-val"><span id="vol-s-conc-v">6.0</span>%</div>
         </div>
-        <div class="slider-val sat-val"><span id="s-conc-v">6.0</span>%</div>
-      </div>
-      <div class="slider-row">
-        <div>
-          <div class="slider-label">FGF (L/min)</div>
-          <input type="range" class="sat-range" id="s-flow" min="1" max="8" step="0.5" value="4">
-        </div>
-        <div class="slider-val sat-val"><span id="s-flow-v">4.0</span> L/min</div>
-      </div>
-    </div>
-
-    <div class="metrics">
-      <div class="metric"><div class="metric-val sat-val" id="s-ml">—</div><div class="metric-label">mL líquido</div></div>
-      <div class="metric"><div class="metric-val sat-val" id="s-vap">—</div><div class="metric-label">L vapor</div></div>
-      <div class="metric"><div class="metric-val sat-val" id="s-rate">—</div><div class="metric-label">mL/hora</div></div>
-    </div>
-  </div>
-
-  <!-- ── MANUTENÇÃO ── -->
-  <div class="card">
-    <div class="card-header">
-      <div class="phase-dot dot-man"></div>
-      <h2>Manutenção</h2>
-      <span class="badge badge-man">FGF reduzido</span>
-    </div>
-
-    <div class="time-block">
-      <div class="time-start-row">
-        <label>Início</label>
-        <input type="time" id="m-start" value="08:05">
-      </div>
-
-      <div class="dur-slider-wrap">
-        <input type="range" class="dur-slide man-ds" id="m-dur-slide"
-               min="5" max="720" step="5" value="60"
-               style="--pct:7.6%">
-        <div class="dur-ticks">
-          <span>5min</span><span>2h</span><span>4h</span><span>6h</span><span>8h</span><span>10h</span><span>12h</span>
+        <div class="v-slider-row">
+          <div>
+            <div class="v-slider-label">FGF (L/min)</div>
+            <input type="range" class="v-sat-range" id="vol-s-flow" min="1" max="8" step="0.5" value="4" oninput="volCalc()">
+          </div>
+          <div class="v-slider-val v-sat-val"><span id="vol-s-flow-v">4.0</span> L/min</div>
         </div>
       </div>
+      <div class="v-metrics">
+        <div class="v-metric"><div class="v-metric-val v-sat-val" id="vol-s-ml">—</div><div class="v-metric-label">mL líquido</div></div>
+        <div class="v-metric"><div class="v-metric-val v-sat-val" id="vol-s-vap">—</div><div class="v-metric-label">L vapor</div></div>
+        <div class="v-metric"><div class="v-metric-val v-sat-val" id="vol-s-rate">—</div><div class="v-metric-label">mL/hora</div></div>
+      </div>
+    </div>
 
-      <div class="time-result">
-        <div class="end-block">
-          <div class="end-label">início</div>
-          <div class="end-time man-val" id="m-display-start">08:05</div>
+    <!-- Manutenção -->
+    <div class="v-card">
+      <div class="v-card-header">
+        <div class="v-phase-dot v-dot-man"></div>
+        <h2>Manutenção</h2>
+        <span class="v-badge v-badge-man">FGF reduzido</span>
+      </div>
+      <div class="v-time-block">
+        <div class="v-time-start-row">
+          <label>Início</label>
+          <input type="time" id="vol-m-start" value="08:05" onchange="volCalc()">
         </div>
-        <div class="arrow">→</div>
-        <div class="end-block">
-          <div class="end-label">fim estimado</div>
-          <div class="end-time man-val" id="m-end-display">09:05</div>
+        <div class="v-dur-slider-wrap">
+          <input type="range" class="v-dur-slide v-man-ds" id="vol-m-dur-slide"
+                 min="5" max="720" step="5" value="60" style="--pct:7.6%" oninput="volCalc()">
+          <div class="v-dur-ticks">
+            <span>5min</span><span>2h</span><span>4h</span><span>6h</span><span>8h</span><span>10h</span><span>12h</span>
+          </div>
         </div>
-        <div class="arrow">=</div>
-        <div class="dur-block">
-          <div class="dur-label">duração</div>
-          <div class="dur-val man-val">
-            <span id="m-dur-val">60</span><span class="dur-unit">min</span>
+        <div class="v-time-result">
+          <div class="v-end-block">
+            <div class="v-end-label">início</div>
+            <div class="v-end-time v-man-val" id="vol-m-display-start">08:05</div>
+          </div>
+          <div class="v-arrow">→</div>
+          <div class="v-end-block">
+            <div class="v-end-label">fim estimado</div>
+            <div class="v-end-time v-man-val" id="vol-m-end-display">09:05</div>
+          </div>
+          <div class="v-arrow">=</div>
+          <div class="v-dur-block">
+            <div class="v-dur-label">duração</div>
+            <div class="v-dur-val v-man-val"><span id="vol-m-dur-val">60</span><span class="v-dur-unit">min</span></div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-row">
-        <div>
-          <div class="slider-label">Concentração</div>
-          <input type="range" class="man-range" id="m-conc" min="0.5" max="5" step="0.5" value="2">
+      <div class="v-slider-group">
+        <div class="v-slider-row">
+          <div>
+            <div class="v-slider-label">Concentração</div>
+            <input type="range" class="v-man-range" id="vol-m-conc" min="0.5" max="5" step="0.5" value="2" oninput="volCalc()">
+          </div>
+          <div class="v-slider-val v-man-val"><span id="vol-m-conc-v">2.0</span>%</div>
         </div>
-        <div class="slider-val man-val"><span id="m-conc-v">2.0</span>%</div>
-      </div>
-      <div class="slider-row">
-        <div>
-          <div class="slider-label">FGF (L/min)</div>
-          <input type="range" class="man-range" id="m-flow" min="0.5" max="4" step="0.5" value="1.5">
+        <div class="v-slider-row">
+          <div>
+            <div class="v-slider-label">FGF (L/min)</div>
+            <input type="range" class="v-man-range" id="vol-m-flow" min="0.5" max="4" step="0.5" value="1.5" oninput="volCalc()">
+          </div>
+          <div class="v-slider-val v-man-val"><span id="vol-m-flow-v">1.5</span> L/min</div>
         </div>
-        <div class="slider-val man-val"><span id="m-flow-v">1.5</span> L/min</div>
+      </div>
+      <div class="v-metrics">
+        <div class="v-metric"><div class="v-metric-val v-man-val" id="vol-m-ml">—</div><div class="v-metric-label">mL líquido</div></div>
+        <div class="v-metric"><div class="v-metric-val v-man-val" id="vol-m-vap">—</div><div class="v-metric-label">L vapor</div></div>
+        <div class="v-metric"><div class="v-metric-val v-man-val" id="vol-m-rate">—</div><div class="v-metric-label">mL/hora</div></div>
       </div>
     </div>
 
-    <div class="metrics">
-      <div class="metric"><div class="metric-val man-val" id="m-ml">—</div><div class="metric-label">mL líquido</div></div>
-      <div class="metric"><div class="metric-val man-val" id="m-vap">—</div><div class="metric-label">L vapor</div></div>
-      <div class="metric"><div class="metric-val man-val" id="m-rate">—</div><div class="metric-label">mL/hora</div></div>
-    </div>
-  </div>
-
-  <!-- Total -->
-  <div>
-    <div class="total-card">
+    <!-- Total -->
+    <div class="v-total-card">
       <div>
         <p style="font-size:11px;color:var(--muted);margin-bottom:5px;">total cirurgia</p>
         <div style="display:flex;align-items:baseline;gap:5px;">
-          <span class="total-number" id="tot-all">—</span>
-          <span style="font-size:14px;color:var(--blue);">mL</span>
+          <span class="v-total-number" id="vol-tot-all">—</span>
+          <span style="font-size:14px;color:var(--accent);">mL</span>
         </div>
       </div>
-      <div class="total-meta">
+      <div class="v-total-meta">
         <p>duração total</p>
-        <strong id="tot-dur">—</strong>
+        <strong id="vol-tot-dur">—</strong>
         <p style="margin-top:6px;">agente</p>
-        <strong id="tot-agent">Sevorane</strong>
+        <strong id="vol-tot-agent">Sevorane</strong>
+      </div>
+    </div>
+    <div class="v-split-row">
+      <div class="v-split-item v-split-sat">
+        <div class="v-s-label">saturação</div>
+        <div class="v-s-val" id="vol-tot-sat">—</div>
+        <div class="v-s-unit">mL</div>
+      </div>
+      <div class="v-split-item v-split-man">
+        <div class="v-s-label">manutenção</div>
+        <div class="v-s-val" id="vol-tot-man">—</div>
+        <div class="v-s-unit">mL</div>
+      </div>
+    </div>
+    <div class="v-warn" id="vol-warn-box">Consumo elevado (&gt;50 mL) — revise FGF e concentração se possível.</div>
+
+    <!-- Chart -->
+    <div class="v-chart-card">
+      <div class="v-chart-title">consumo ao longo do tempo</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="vol-chart"></canvas>
+      </div>
+      <div class="v-legend">
+        <div class="v-legend-item"><div class="v-legend-dot" style="background:var(--yellow)"></div>Saturação</div>
+        <div class="v-legend-item"><div class="v-legend-dot" style="background:var(--green)"></div>Manutenção</div>
+        <div class="v-legend-item"><div class="v-legend-dot" style="background:var(--accent)"></div>Acumulado</div>
       </div>
     </div>
 
-    <div class="split-row">
-      <div class="split-item split-sat">
-        <div class="s-label">saturação</div>
-        <div class="s-val" id="tot-sat">—</div>
-        <div class="s-unit">mL</div>
-      </div>
-      <div class="split-item split-man">
-        <div class="s-label">manutenção</div>
-        <div class="s-val" id="tot-man">—</div>
-        <div class="s-unit">mL</div>
-      </div>
+    <div class="v-footer">
+      Fórmula: (d × 22400 × (273+T)) / (PM × 273)<br>
+      Sevorane d=1,53 · PM=200 · fator≈184 mL/mL a 20°C<br>
+      Estimativa · não substitui protocolo institucional
     </div>
-    <div class="warn" id="warn-box">Consumo elevado (&gt;50 mL) — revise FGF e concentração se possível.</div>
+
   </div>
-
-  <!-- Chart -->
-  <div class="chart-card">
-    <div class="chart-title">consumo ao longo do tempo</div>
-    <div style="position:relative;height:200px;">
-      <canvas id="myChart"></canvas>
-    </div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Saturação</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Manutenção</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Acumulado</div>
-    </div>
-  </div>
-
 </div>
 
-<footer>
-  Fórmula: (d × 22400 × (273+T)) / (PM × 273)<br>
-  Sevorane d=1,53 · PM=200 · fator≈184 mL/mL a 20°C<br>
-  Estimativa · não substitui protocolo institucional
-</footer>
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="nav('iot',this)">
+    <span class="icon">💉</span>IOT
+  </button>
+  <button class="nav-btn" onclick="nav('sed',this)">
+    <span class="icon">😴</span>Sedação
+  </button>
+  <button class="nav-btn" onclick="nav('adj',this)">
+    <span class="icon">🧪</span>Adjuv.
+  </button>
+  <button class="nav-btn" onclick="nav('al',this)">
+    <span class="icon">🔬</span>An.Local
+  </button>
+  <button class="nav-btn" onclick="nav('vaso',this)">
+    <span class="icon">💓</span>Vasoat.
+  </button>
+  <button class="nav-btn" onclick="nav('hid',this)">
+    <span class="icon">💧</span>Hidrat.
+  </button>
+  <button class="nav-btn" onclick="nav('pcr',this)">
+    <span class="icon">🚨</span>PCR
+  </button>
+  <button class="nav-btn" onclick="nav('vol',this)">
+    <span class="icon">💨</span>Volátil
+  </button>
+</nav>
 
 <script>
-const AGENTS = {
-  sevo:{name:'Sevorane',  d:1.53,pm:200.05},
-  iso: {name:'Isoflurano',d:1.49,pm:184.5 },
-  des: {name:'Desflurano',d:1.47,pm:168.04},
-  halo:{name:'Halotano',  d:1.87,pm:197.38},
+/* ── utils ── */
+const W   = () => parseFloat(document.getElementById('weight').value) || 0;
+const H   = () => parseFloat(document.getElementById('height').value) || 0;
+const f   = (n, d=1) => (isNaN(n)||!isFinite(n)||n<=0) ? '—' : (+n.toFixed(d)).toString();
+
+let modes = {};
+let sex = 'M'; // 'M' | 'F'
+let weights = { tbw:0, ibw:0, abw:0, lbw:0 }; // updated in update()
+
+function setSex(s) {
+  sex = s;
+  document.getElementById('sexM').classList.toggle('active', s==='M');
+  document.getElementById('sexF').classList.toggle('active', s==='F');
+  update();
+}
+
+function nav(id, el) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if (id === 'vol') setTimeout(volCalc, 50);
+}
+
+function toggleMode(drugId, mode) {
+  modes[drugId] = mode;
+  update();
+}
+
+/* ── Weight formulas ── */
+function calcIBW(h_cm, s) {
+  // Devine: ♂ 50 + 0.91×(h−152.4) | ♀ 45.5 + 0.91×(h−152.4)
+  if (!h_cm || h_cm < 100) return 0;
+  const base = s === 'F' ? 45.5 : 50;
+  return Math.max(base + 0.91 * (h_cm - 152.4), 30);
+}
+
+function calcLBW(w, h_cm, s) {
+  // James formula
+  if (!w || !h_cm) return 0;
+  const hm = h_cm / 100;
+  if (s === 'F') return Math.max(1.07*w - 148*(w/(hm*100))**2, 20);
+  return Math.max(1.1*w - 128*(w/(hm*100))**2, 20);
+}
+
+function calcABW(tbw, ibw) {
+  // ABW = IBW + 0.4×(TBW − IBW)  [Bauer et al.]
+  if (!tbw || !ibw) return 0;
+  if (tbw <= ibw) return ibw; // não obeso — usa IBW
+  return ibw + 0.4 * (tbw - ibw);
+}
+
+/* peso por tipo */
+function wByType(type) {
+  switch(type) {
+    case 'IBW': return weights.ibw || weights.tbw;
+    case 'ABW': return weights.abw || weights.ibw || weights.tbw;
+    case 'LBW': return weights.lbw || weights.ibw || weights.tbw;
+    default:    return weights.tbw; // TBW
+  }
+}
+
+const wTypeColor = { TBW:'var(--text)', IBW:'var(--green)', ABW:'var(--orange)', LBW:'var(--purple)' };
+
+function update() {
+  const w = W(), h = H();
+
+  // IMC
+  const imcEl = document.getElementById('imc-display');
+  if (w && h) {
+    const hm = h/100, imc = w/(hm*hm);
+    let cls, label;
+    if      (imc < 18.5) { cls='imc-low';    label='Baixo peso'; }
+    else if (imc < 25)   { cls='imc-normal';  label='Normal'; }
+    else if (imc < 30)   { cls='imc-over';    label='Sobrepeso'; }
+    else if (imc < 35)   { cls='imc-obese';   label='Obesidade I'; }
+    else if (imc < 40)   { cls='imc-obese';   label='Obesidade II'; }
+    else                 { cls='imc-mobese';  label='Ob. Mórbida'; }
+    imcEl.innerHTML = `<span class="imc-val">${f(imc,1)}</span><span class="imc-label ${cls}">${label}</span>`;
+  } else {
+    imcEl.innerHTML = `<span style="color:var(--muted);font-size:0.78rem;font-weight:500">—</span>`;
+  }
+
+  // Compute weights
+  const ibw = calcIBW(h, sex);
+  const lbw = calcLBW(w, h, sex);
+  const abw = calcABW(w, ibw);
+  weights = { tbw: w, ibw, abw, lbw };
+
+  // Display weight boxes
+  const kg = v => v ? `${f(v,1)}<span class="wbox-unit"> kg</span>` : `<span style="color:var(--muted);font-size:0.75rem">—</span>`;
+  document.getElementById('w-tbw').innerHTML = kg(w);
+  document.getElementById('w-ibw').innerHTML = kg(ibw);
+  // ABW only meaningful if obese (TBW > IBW * 1.2)
+  const showAbw = w && ibw && w > ibw * 1.1;
+  document.getElementById('w-abw').innerHTML = showAbw ? kg(abw) : `<span style="color:var(--muted);font-size:0.72rem">= IBW</span>`;
+  document.getElementById('w-lbw').innerHTML = kg(lbw);
+
+  renderIOT();
+  renderSed();
+  renderAdj();
+  renderAL();
+  renderVaso();
+  renderHid();
+  renderPCR();
+}
+
+function noWeight() {
+  return `<div class="no-weight"><div class="icon">⚖️</div>Insira o peso do paciente para calcular.</div>`;
+}
+
+/* ════════════════════════════════════════
+   IOT / Indução
+════════════════════════════════════════ */
+function renderIOT() {
+  const el = document.getElementById('tab-iot');
+  if (!W()) { el.innerHTML = `<div class="disclaimer">⚠️ Uso exclusivo por médico. Valores de referência.</div>` + noWeight(); return; }
+
+  // Each drug picks its own weight via wByType
+  const mk = (wtype) => wByType(wtype);
+
+  const drugs = [
+    (() => { const wt = mk('LBW'); return {
+      id:'fen', wtype:'LBW', name:'Fentanil', color:'var(--purple)',
+      sub:'Opioide — analgesia pré-IOT', conc:'50 mcg/ml (amp 2ml)', hasModes:true,
+      iotRows:[
+        { l:'Pré-IOT  1 mcg/kg', v:`${f(wt*1/50)} ml`, u:`= ${f(wt*1)} mcg` },
+        { l:'Dose máx  3 mcg/kg', v:`${f(wt*3/50)} ml`, u:`= ${f(wt*3)} mcg` },
+      ],
+      iotNote:`Ampola 2ml = 100 mcg | Usar sem diluição`,
+      infTable: infTable_wt(wt, [
+        {d:0.5, eff:'Analgesia leve', conc_mcg_ml:5, unit:'mcg/kg/h'},
+        {d:1,   eff:'Analgesia mod.', conc_mcg_ml:5, unit:'mcg/kg/h'},
+        {d:2,   eff:'Sedação profunda', conc_mcg_ml:5, unit:'mcg/kg/h'},
+      ], 'mcg/kg/h'),
+      infNote:`Diluição: 5 amp (500mcg) + 90ml SF → <strong>5 mcg/ml</strong> | Faixa típica: 25–200 mcg/h`,
+      badges:[{t:'Analgesia',c:'bg'},{t:'Depressão resp.',c:'br'}],
+    }})(),
+    (() => { const wt = mk('TBW'); return {
+      id:'eto', wtype:'TBW', name:'Etomidato', color:'var(--green)',
+      sub:'Hipnótico — melhor estabilidade HD', conc:'2 mg/ml (amp 10ml)', hasModes:false,
+      iotRows:[{l:'Dose  0,3 mg/kg', v:`${f(wt*0.3/2)} ml`, u:`= ${f(wt*0.3)} mg`}],
+      iotNote:`Ampola 10ml = 20mg | Sem diluição`,
+      badges:[{t:'↓Hipotensão',c:'bg'},{t:'CI: sepse (suprime adrenal)',c:'bw'}],
+    }})(),
+    (() => { const wt = mk('TBW'); return {
+      id:'cet', wtype:'TBW', name:'Cetamina', color:'var(--yellow)',
+      sub:'Dissociativo — broncodilatador, estável HD', conc:'50 mg/ml (amp 2ml)', hasModes:true,
+      iotRows:[
+        {l:'Mín  1 mg/kg', v:`${f(wt*1/50)} ml`, u:`= ${f(wt*1)} mg`},
+        {l:'Máx  2 mg/kg', v:`${f(wt*2/50)} ml`, u:`= ${f(wt*2)} mg`},
+      ],
+      iotNote:`Pode diluir: 2ml + 8ml SF → 10mg/ml<br>Diluído: 1mg/kg = <strong>${f(wt/10)} ml</strong> | 2mg/kg = <strong>${f(wt*2/10)} ml</strong>`,
+      infTable: infTable_wt(wt, [
+        {d:0.1,eff:'Analgesia mín',conc_mcg_ml:10000,unit:'mg/kg/h'},
+        {d:0.3,eff:'Analgesia mod.',conc_mcg_ml:10000,unit:'mg/kg/h'},
+        {d:0.5,eff:'Analgesia máx',conc_mcg_ml:10000,unit:'mg/kg/h'},
+        {d:1.0,eff:'Sedação leve',conc_mcg_ml:10000,unit:'mg/kg/h'},
+        {d:2.0,eff:'Sedação profunda',conc_mcg_ml:10000,unit:'mg/kg/h'},
+      ], 'mg/kg/h'),
+      infNote:`Diluição: 2ml (100mg) + 8ml SF → <strong>10mg/ml</strong>`,
+      badges:[{t:'Sepse/instabilidade HD',c:'bg'},{t:'Broncoespasmo',c:'bg'},{t:'CI relativa: HIC, HAS',c:'bw'}],
+    }})(),
+    (() => { const wt = mk('IBW'); return {
+      id:'mid', wtype:'IBW', name:'Midazolam', color:'var(--accent)',
+      sub:'Benzodiazepínico — amnésia anterógrada', conc:'5 mg/ml (amp 3ml)', hasModes:false,
+      iotRows:[
+        {l:'0,1 mg/kg', v:`${f(wt*0.1/5)} ml`, u:`= ${f(wt*0.1)} mg`},
+        {l:'0,2 mg/kg', v:`${f(wt*0.2/5)} ml`, u:`= ${f(wt*0.2)} mg`},
+        {l:'0,3 mg/kg', v:`${f(wt*0.3/5)} ml`, u:`= ${f(wt*0.3)} mg`},
+      ],
+      iotNote:`Sem diluição | Pode diluir 3ml + 7ml SF → 1,5mg/ml`,
+      badges:[{t:'Amnésia dose-dependente',c:'bg'},{t:'Hipotensão',c:'bw'},{t:'Reduzir em idosos',c:'bw'}],
+    }})(),
+    (() => { const wt = mk('LBW'); return {
+      id:'pro', wtype:'LBW', name:'Propofol', color:'var(--red)',
+      sub:'Hipnótico — broncodilatador', conc:'10 mg/ml (frasco)', hasModes:false,
+      iotRows:[
+        {l:'Mín  1,5 mg/kg', v:`${f(wt*1.5/10)} ml`, u:`= ${f(wt*1.5)} mg`},
+        {l:'Máx  3,0 mg/kg', v:`${f(wt*3/10)} ml`, u:`= ${f(wt*3)} mg`},
+      ],
+      iotNote:`Frasco 10mg/ml | Sem diluição | Infusão → aba Sedação`,
+      badges:[{t:'Broncodilatador',c:'bg'},{t:'Hipotensão importante',c:'br'}],
+    }})(),
+    (() => { const wt = mk('IBW'); return {
+      id:'roc', wtype:'IBW', name:'Rocurônio', color:'var(--green)',
+      sub:'BNM não-despolarizante — duração longa', conc:'10 mg/ml (amp 5ml)', hasModes:false,
+      iotRows:[
+        {l:'IOT  1 mg/kg', v:`${f(wt*1/10)} ml`, u:`= ${f(wt*1)} mg`},
+        {l:'RSI  1,2 mg/kg', v:`${f(wt*1.2/10)} ml`, u:`= ${f(wt*1.2)} mg`},
+        {l:'Sugamadex reversão rápida  16 mg/kg', v:`${f(wt*16/200)} ml`, u:`= ${f(wt*16)} mg (200mg/2ml)`},
+      ],
+      iotNote:`Sem diluição | Início: 45-60s | Duração: ~45min`,
+      badges:[{t:'Revertível: Sugamadex',c:'bg'},{t:'Duração 45min',c:'bw'}],
+    }})(),
+    (() => { const wt = mk('TBW'); return {
+      id:'sux', wtype:'TBW', name:'Succinilcolina', color:'var(--orange)',
+      sub:'BNM despolarizante — duração curta', conc:'10 mg/ml', hasModes:false,
+      iotRows:[{l:'Dose  1,5 mg/kg', v:`${f(wt*1.5/10)} ml`, u:`= ${f(wt*1.5)} mg`}],
+      iotNote:`Sem diluição | Início: 45-60s | Duração: 6-10min`,
+      badges:[{t:'↓Duração',c:'bg'},{t:'CI: hipercalemia',c:'br'},{t:'CI: rabdomiólise, miastenia',c:'br'},{t:'Preferir Roc se CI',c:'bw'}],
+    }})(),
+  ];
+
+  let html = `<div class="disclaimer">⚠️ Uso exclusivo por médico habilitado. Valores de referência.</div>`;
+  html += `<div class="sec-hdr">Hipnóticos / Indução</div>`;
+  for (const d of drugs.slice(0,4)) html += buildCard(d);
+  html += `<div class="sec-hdr">Bloqueadores Neuromusculares</div>`;
+  for (const d of drugs.slice(4)) html += buildCard(d);
+  el.innerHTML = html;
+}
+
+/* ════════════════════════════════════════
+   Sedação Contínua
+════════════════════════════════════════ */
+function renderSed() {
+  const el = document.getElementById('tab-sed');
+  if (!W()) { el.innerHTML = noWeight(); return; }
+
+  const drugs = [
+    (() => { const wt = wByType('IBW'); return {
+      id:'dex', wtype:'IBW', name:'Dexmedetomidina', color:'var(--teal)',
+      sub:'α2-agonista — sedação cooperativa', conc:'4 mcg/ml (após diluição)', hasModes:false,
+      iotRows:[],
+      iotNote:`Amp 200mcg/2ml → 2ml + 48ml SF = <strong>4 mcg/ml (50ml)</strong><br>
+      Ataque (opcional): 0,5–1 mcg/kg em 10–20min = <strong>${f(wt*0.5/4,2)}–${f(wt/4,2)} ml (4mcg/ml)</strong>`,
+      infTable: infTable_wt(wt,[
+        {d:0.2,eff:'Mín sedação',conc_mcg_ml:4,unit:'mcg/kg/h'},
+        {d:0.4,eff:'Sedação leve',conc_mcg_ml:4,unit:'mcg/kg/h'},
+        {d:0.7,eff:'Sedação mod.',conc_mcg_ml:4,unit:'mcg/kg/h'},
+        {d:1.0,eff:'Sedação prof.',conc_mcg_ml:4,unit:'mcg/kg/h'},
+        {d:1.4,eff:'Dose máx',conc_mcg_ml:4,unit:'mcg/kg/h'},
+      ],'mcg/kg/h'),
+      badges:[{t:'Sedação cooperativa',c:'bg'},{t:'Sem depressão resp.',c:'bg'},{t:'Bradicardia/hipotensão',c:'bw'}],
+    }})(),
+    (() => { const wt = wByType('LBW'); return {
+      id:'prop_inf', wtype:'LBW', name:'Propofol', color:'var(--red)',
+      sub:'Hipnótico contínuo — UTI/anestesia', conc:'10 mg/ml (frasco)', hasModes:false,
+      iotRows:[],
+      iotNote:`Frasco 10mg/ml | Sem diluição | Faixa: 0,5–4 mg/kg/h<br><strong>⚠️ Síndrome propofol se &gt;5mg/kg/h por &gt;48h</strong>`,
+      infTable: infTable_wt(wt,[
+        {d:0.5,eff:'Sedação leve',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:1.0,eff:'Sedação mod.',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:2.0,eff:'Sedação prof.',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:3.0,eff:'Anestesia',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:4.0,eff:'Dose máx',conc_mcg_ml:10,unit:'mg/kg/h'},
+      ],'mg/kg/h'),
+      badges:[{t:'Sem diluição',c:'bi'},{t:'CI síndrome propofol',c:'br'}],
+    }})(),
+    (() => { const wt = wByType('IBW'); return {
+      id:'mid_inf', wtype:'IBW', name:'Midazolam', color:'var(--accent)',
+      sub:'Benzodiazepínico infusão contínua', conc:'1 mg/ml (após diluição)', hasModes:false,
+      iotRows:[],
+      iotNote:`Diluição: 15mg (3ml de 5mg/ml) + 12ml SF → <strong>1mg/ml</strong> | Faixa: 0,02–0,1 mg/kg/h`,
+      infTable: infTable_wt(wt,[
+        {d:0.02,eff:'Sedação mín',conc_mcg_ml:1,unit:'mg/kg/h'},
+        {d:0.05,eff:'Sedação mod.',conc_mcg_ml:1,unit:'mg/kg/h'},
+        {d:0.07,eff:'Sedação prof.',conc_mcg_ml:1,unit:'mg/kg/h'},
+        {d:0.10,eff:'Dose máx',conc_mcg_ml:1,unit:'mg/kg/h'},
+      ],'mg/kg/h'),
+      badges:[{t:'Acúmulo insuf. renal/hepática',c:'bw'}],
+    }})(),
+    (() => { const wt = wByType('LBW'); return {
+      id:'fen_inf', wtype:'LBW', name:'Fentanil', color:'var(--purple)',
+      sub:'Opioide infusão — analgesia contínua', conc:'5 mcg/ml (após diluição)', hasModes:false,
+      iotRows:[],
+      iotNote:`Diluição: 5 amp (500mcg) + 90ml SF → <strong>5 mcg/ml</strong> | Faixa: 25–200 mcg/h`,
+      infTable: (() => {
+        const rows = [[25,'Leve'],[50,'Mod.'],[100,'Analgesia'],[150,'Intens.'],[200,'Máx']];
+        let t = `<div class="dose-table"><table class="inf-table"><tr><th>mcg/h</th><th>Efeito</th><th>ml/h</th></tr>`;
+        rows.forEach(([d,eff]) => { t += `<tr><td>${d}</td><td class="muted">${eff}</td><td class="hl">${f(d/5,1)}</td></tr>`; });
+        return t + `</table></div>`;
+      })(),
+      badges:[{t:'Titular pela dor',c:'bi'},{t:'Depressão resp.',c:'br'}],
+    }})(),
+    (() => { const wt = wByType('TBW'); return {
+      id:'cet_inf', wtype:'TBW', name:'Cetamina', color:'var(--yellow)',
+      sub:'Analgesia/sedação dissociativa contínua', conc:'10 mg/ml (após diluição)', hasModes:false,
+      iotRows:[],
+      iotNote:`Diluição: 2ml (100mg) + 8ml SF → <strong>10mg/ml</strong>`,
+      infTable: infTable_wt(wt,[
+        {d:0.1,eff:'Analgesia mín',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:0.3,eff:'Analgesia mod.',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:0.5,eff:'Analgesia máx',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:1.0,eff:'Sedação leve',conc_mcg_ml:10,unit:'mg/kg/h'},
+        {d:2.0,eff:'Sedação profunda',conc_mcg_ml:10,unit:'mg/kg/h'},
+      ],'mg/kg/h'),
+      badges:[{t:'Broncoespasmo',c:'bg'},{t:'Boa HD',c:'bg'}],
+    }})(),
+  ];
+
+  let html = `<div class="sec-hdr">Sedação / Analgesia Contínua</div>`;
+  for (const d of drugs) html += buildCard(d);
+  el.innerHTML = html;
+}
+
+/* ════════════════════════════════════════
+   Adjuvantes
+════════════════════════════════════════ */
+function renderAdj() {
+  const el = document.getElementById('tab-adj');
+  if (!W()) { el.innerHTML = noWeight(); return; }
+
+  const secs = [
+    {
+      hdr: 'Reversão de Bloqueio Neuromuscular',
+      drugs: [
+        (() => { const wt = wByType('TBW'); return {
+          id:'atro', wtype:'TBW', name:'Atropina', color:'var(--orange)',
+          sub:'Anticolinérgico — bradicardia / pré-BNM', conc:'0,5 mg/ml (amp 1ml)', hasModes:false,
+          iotRows:[
+            {l:'Bradicardia  0,01–0,02 mg/kg', v:`${f(wt*0.01/0.5,2)}–${f(wt*0.02/0.5,2)} ml`, u:`= ${f(wt*0.01,3)}–${f(wt*0.02,3)} mg`},
+            {l:'Dose fixa mín adulto', v:'1 ml', u:'= 0,5 mg'},
+            {l:'Dose máx adulto', v:'6 ml', u:'= 3 mg total'},
+          ],
+          iotNote:`Ampola 0,5mg/ml | Mín efetiva ≥ 0,5mg (abaixo: bradicardia paradoxal)<br>Dar <strong>antes</strong> da neostigmina`,
+          badges:[{t:'Mín 0,5mg',c:'bw'},{t:'Máx 3mg',c:'bw'},{t:'Bradicardia paradoxal <0,5mg',c:'br'}],
+        }})(),
+        (() => { const wt = wByType('IBW'); return {
+          id:'neo', wtype:'IBW', name:'Neostigmina (Prostigmine)', color:'var(--teal)',
+          sub:'Anticolinesterásico — reversão BNM', conc:'0,5 mg/ml (amp 1ml)', hasModes:false,
+          iotRows:[
+            {l:'Dose mín  0,04 mg/kg', v:`${f(wt*0.04/0.5,2)} ml`, u:`= ${f(wt*0.04,2)} mg`},
+            {l:'Dose máx  0,07 mg/kg', v:`${f(wt*0.07/0.5,2)} ml`, u:`= ${f(wt*0.07,2)} mg`},
+            {l:'Dose máx absoluta', v:'10 ml', u:'= 5 mg'},
+          ],
+          iotNote:`<strong>Sempre + Atropina 0,015mg/kg:</strong> ${f(wt*0.015/0.5,2)} ml (0,5mg/ml)<br>Aguardar TOF ≥ 2`,
+          badges:[{t:'Sempre + Atropina',c:'br'},{t:'TOF ≥2',c:'bw'},{t:'Máx 5mg',c:'bw'}],
+        }})(),
+        (() => { const wt = wByType('IBW'); return {
+          id:'sug', wtype:'IBW', name:'Sugamadex', color:'var(--green)',
+          sub:'Reversão seletiva Rocurônio / Vecurônio', conc:'200 mg/2ml (amp)', hasModes:false,
+          iotRows:[
+            {l:'Rotina — TOF ≥ 2  (2 mg/kg)', v:`${f(wt*2/100,1)} ml`, u:`= ${f(wt*2,0)} mg`},
+            {l:'Profundo — TOF 0–1  (4 mg/kg)', v:`${f(wt*4/100,1)} ml`, u:`= ${f(wt*4,0)} mg`},
+            {l:'Imediata RSI  (16 mg/kg)', v:`${f(wt*16/100,1)} ml`, u:`= ${f(wt*16,0)} mg`},
+          ],
+          iotNote:`100mg/ml | Bolus EV rápido | Sem diluição<br><strong>Reversão imediata: 3min após Roc 1,2mg/kg</strong>`,
+          badges:[{t:'Específico Roc/Vec',c:'bi'},{t:'Dose por IBW',c:'bi'},{t:'TOF guia dose',c:'bw'}],
+        }})(),
+      ],
+    },
+    {
+      hdr: 'Analgésicos — Opioides',
+      drugs: [
+        (() => { const wt = wByType('LBW'); return {
+          id:'mor', wtype:'LBW', name:'Morfina', color:'var(--purple)',
+          sub:'Opioide forte — analgesia moderada/intensa', conc:'10 mg/ml (amp 1ml)', hasModes:true,
+          iotRows:[
+            {l:'Bolus mín  0,05 mg/kg', v:`${f(wt*0.05/10,3)} ml`, u:`= ${f(wt*0.05,2)} mg`},
+            {l:'Bolus máx  0,1 mg/kg', v:`${f(wt*0.1/10,3)} ml`, u:`= ${f(wt*0.1,2)} mg`},
+          ],
+          iotNote:`Amp 10mg/ml | Diluir para 1mg/ml (1ml + 9ml SF) → ${f(wt*0.1,2)} ml (0,1mg/kg)<br>Administrar lento IV em 5min — histamina se rápido`,
+          infTable: infTable_wt(wt,[
+            {d:0.01,eff:'Analgesia leve',conc_mcg_ml:1,unit:'mg/kg/h'},
+            {d:0.02,eff:'Analgesia mod.',conc_mcg_ml:1,unit:'mg/kg/h'},
+            {d:0.04,eff:'Analgesia intensa',conc_mcg_ml:1,unit:'mg/kg/h'},
+          ],'mg/kg/h'),
+          infNote:`Diluição infusão: 10mg (1ml) + 9ml SF → <strong>1mg/ml</strong>`,
+          badges:[{t:'Analgesia intensa',c:'bg'},{t:'Histamina se rápido',c:'bw'},{t:'Acúmulo insuf. renal',c:'br'},{t:'Naloxona reverte',c:'bi'}],
+        }})(),
+        (() => { const wt = wByType('TBW'); return {
+          id:'tra', wtype:'TBW', name:'Tramadol', color:'var(--accent)',
+          sub:'Opioide fraco / misto — analgesia leve-moderada', conc:'50 mg/ml (amp 2ml = 100mg)', hasModes:false,
+          iotRows:[
+            {l:'Dose mín  1 mg/kg', v:`${f(wt*1/50,2)} ml`, u:`= ${f(Math.min(wt*1,100),0)} mg`},
+            {l:'Dose máx  2 mg/kg', v:`${f(Math.min(wt*2,100)/50,2)} ml`, u:`= ${f(Math.min(wt*2,100),0)} mg (máx 100mg)`},
+          ],
+          iotNote:`Amp 50mg/ml (2ml = 100mg) | <strong>Diluir em 100ml SF — infundir em 30min</strong><br>Máximo 400mg/dia | Intervalo 6h`,
+          badges:[{t:'Máx 100mg/dose',c:'bi'},{t:'Máx 400mg/dia',c:'bi'},{t:'Infundir lento',c:'bw'},{t:'Abaixa limiar convulsão',c:'br'}],
+        }})(),
+      ],
+    },
+    {
+      hdr: 'Analgésicos — Não Opioides',
+      drugs: [
+        (() => { const wt = wByType('TBW'); return {
+          id:'para', wtype:'TBW', name:'Paracetamol EV', color:'var(--green)',
+          sub:'Analgésico / antipirético — 1ª linha pós-op', conc:'10 mg/ml (frasco 100ml = 1g)', hasModes:false,
+          iotRows:[
+            {l:'Dose  15 mg/kg', v:`${f(Math.min(wt*15,1000)/10,1)} ml`, u:`= ${f(Math.min(wt*15,1000),0)} mg`},
+            {l:'Dose padrão adulto', v:'100 ml', u:'= 1g (máx por dose)'},
+          ],
+          iotNote:`Frasco pronto 10mg/ml | <strong>Infundir em 15min</strong><br>
+          Máx 4g/dia | Intervalo ≥ 4h | Reduzir a 2g/dia em hepatopatas`,
+          badges:[{t:'Infundir 15min',c:'bw'},{t:'Máx 1g/dose',c:'bi'},{t:'CI: hepatopatia grave',c:'br'}],
+        }})(),
+        (() => { const wt = wByType('TBW'); return {
+          id:'dip', wtype:'TBW', name:'Dipirona (Metamizol)', color:'var(--green)',
+          sub:'Analgésico / antiespasmódico / antipirético', conc:'500 mg/ml (amp 2ml = 1g)', hasModes:false,
+          iotRows:[
+            {l:'Dose mín  15 mg/kg', v:`${f(wt*15/500,2)} ml`, u:`= ${f(Math.min(wt*15,1000),0)} mg`},
+            {l:'Dose máx  20 mg/kg', v:`${f(Math.min(wt*20,1000)/500,2)} ml`, u:`= ${f(Math.min(wt*20,1000),0)} mg`},
+            {l:'Dose máx absoluta', v:'2 ml', u:'= 1g por dose'},
+          ],
+          iotNote:`Amp 500mg/ml (2ml=1g) | <strong>Diluir em 100ml SF — infundir em 15min</strong><br>Máx 4g/dia | Intervalo 6h`,
+          badges:[{t:'Infundir lento 15min',c:'bw'},{t:'Máx 1g/dose',c:'bi'},{t:'Hipotensão se rápido',c:'br'}],
+        }})(),
+        (() => { const wt = wByType('TBW'); return {
+          id:'ceto', wtype:'TBW', name:'Cetoprofeno', color:'var(--accent)',
+          sub:'AINE EV — analgesia pós-operatória', conc:'100 mg/2ml (amp)', hasModes:false,
+          iotRows:[
+            {l:'Dose padrão adulto', v:'2 ml', u:'= 100 mg EV'},
+            {l:'Dose  1 mg/kg (máx 100mg)', v:`${f(Math.min(wt,100)/50,2)} ml`, u:`= ${f(Math.min(wt,100),0)} mg`},
+          ],
+          iotNote:`Amp 100mg/2ml | <strong>Diluir em 100ml SF — infundir em 15–60min</strong><br>Intervalo: 8/8h | Máx 200mg/dia`,
+          badges:[{t:'CI: sangramento',c:'br'},{t:'CI: insuf. renal',c:'br'},{t:'CI: úlcera péptica',c:'br'}],
+        }})(),
+        (() => { const wt = wByType('TBW'); return {
+          id:'mgso4', wtype:'TBW', name:'Sulfato de Magnésio', color:'var(--purple)',
+          sub:'Adjuvante analgésico / anticonvulsivante', conc:'10% = 100 mg/ml', hasModes:false,
+          iotRows:[
+            {l:'Adjuvante ataque  30 mg/kg', v:`${f(wt*30/100,1)} ml`, u:`(10%) em 15–20min`},
+            {l:'Adjuvante ataque  50 mg/kg', v:`${f(wt*50/100,1)} ml`, u:`(10%) em 15–20min`},
+            {l:'Broncoespasmo  2g', v:'20 ml', u:'(10%) em 20min'},
+            {l:'Eclâmpsia  4–6g', v:'40–60 ml', u:'(10%) em 15–20min'},
+          ],
+          iotNote:`MgSO₄ 10% (100mg/ml) ou 50% (500mg/ml)<br>
+          <strong>Manutenção adjuvante: 10–15 mg/kg/h = ${f(wt*10/100,1)}–${f(wt*15/100,1)} ml/h (10%)</strong><br>
+          Manutenção eclâmpsia: 1–2g/h = 10–20ml/h (10%)`,
+          badges:[{t:'Analgesia adjuvante',c:'bg'},{t:'Torsades/Arritmia',c:'bg'},{t:'Toxicidade: reflexo patelar',c:'br'}],
+        }})(),
+      ],
+    },
+    {
+      hdr: 'Antieméticos (Profilaxia NVPO)',
+      drugs: [
+        (() => { const wt = wByType('TBW'); return {
+          id:'ond', wtype:'TBW', name:'Ondansetrona', color:'var(--teal)',
+          sub:'Anti-5HT₃ — antiemético 1ª linha', conc:'2 mg/ml (amp 2ml = 4mg)', hasModes:false,
+          iotRows:[
+            {l:'Profilaxia adulto', v:'2 ml', u:'= 4 mg IV (ao final cirurgia)'},
+            {l:'Tratamento NVPO', v:'2 ml', u:'= 4 mg IV (repetir 8/8h)'},
+            {l:'Dose pediátrica  0,1 mg/kg', v:`${f(wt*0.1/2,2)} ml`, u:`= ${f(Math.min(wt*0.1,4),2)} mg (máx 4mg)`},
+          ],
+          iotNote:`Amp 2mg/ml | Pode dar sem diluição (lento) ou diluir em 50ml SF<br>
+          <strong>Dar 30min antes do fim da cirurgia para profilaxia</strong>`,
+          badges:[{t:'Profilaxia NVPO',c:'bg'},{t:'Sem sedação',c:'bg'},{t:'Prolongamento QT doses altas',c:'bw'}],
+        }})(),
+        (() => { const wt = wByType('TBW'); return {
+          id:'dex_nvpo', wtype:'TBW', name:'Dexametasona', color:'var(--orange)',
+          sub:'Corticoide — antiemético / anti-inflamatório', conc:'4 mg/ml (amp 2,5ml = 10mg)', hasModes:false,
+          iotRows:[
+            {l:'Profilaxia NVPO', v:'1–2 ml', u:'= 4–8 mg IV (na indução)'},
+            {l:'Anti-inflamatório  0,1–0,5 mg/kg', v:`${f(wt*0.1/4,2)}–${f(Math.min(wt*0.5,40)/4,2)} ml`, u:`= ${f(wt*0.1,1)}–${f(Math.min(wt*0.5,40),1)} mg`},
+            {l:'Edema cerebral  0,5–1 mg/kg ataque', v:`${f(Math.min(wt*0.5,40)/4,2)}–${f(Math.min(wt,40)/4,2)} ml`, u:`= ${f(Math.min(wt*0.5,40),1)}–${f(Math.min(wt,40),1)} mg`},
+          ],
+          iotNote:`Amp 4mg/ml | Sem diluição (bolus lento) ou diluir em SF<br>
+          <strong>NVPO: dar na indução (não no final)</strong><br>
+          Máx dose única: 40mg | Hiperglicemia pós-operatória`,
+          badges:[{t:'NVPO na indução',c:'bg'},{t:'Anti-inflamatório',c:'bg'},{t:'Hiperglicemia',c:'bw'},{t:'Máx 40mg',c:'bi'}],
+        }})(),
+      ],
+    },
+    {
+      hdr: 'Corticosteroides',
+      drugs: [
+        (() => { const wt = wByType('TBW'); return {
+          id:'hcort', wtype:'TBW', name:'Hidrocortisona', color:'var(--yellow)',
+          sub:'Corticoide — choque, insuf. adrenal, anafilaxia', conc:'100 mg/2ml ou 500mg pó', hasModes:false,
+          iotRows:[
+            {l:'Dose de estresse periop.', v:'50–100 mg', u:'IV bolus (repetir 8/8h)'},
+            {l:'Choque anafilático  200–500mg', v:'4–10 ml', u:'(50mg/ml) IV bolus'},
+            {l:'Insuf. adrenal / sepse', v:'200 mg/dia', u:'= 50mg 6/6h ou infusão'},
+            {l:'Dose antiinflamatória  1–5 mg/kg', v:`${f(wt*1/50,1)}–${f(Math.min(wt*5,500)/50,1)} ml`, u:`= ${f(wt*1,0)}–${f(Math.min(wt*5,500),0)} mg (50mg/ml)`},
+          ],
+          iotNote:`Amp 100mg/2ml (50mg/ml) ou pó 500mg reconstituído em 2ml<br>
+          <strong>Infusão contínua sepse: 200mg em 48ml SF → 50mg/6h = 8ml/h</strong>`,
+          badges:[{t:'Anafilaxia',c:'br'},{t:'Insuf. adrenal',c:'bg'},{t:'Sepse refratária',c:'bg'},{t:'Hiperglicemia',c:'bw'}],
+        }})(),
+      ],
+    },
+  ];
+
+  let html = '';
+  for (const sec of secs) {
+    html += `<div class="sec-hdr">${sec.hdr}</div>`;
+    for (const d of sec.drugs) html += buildCard(d);
+  }
+  el.innerHTML = html;
+}
+
+/* ════════════════════════════════════════
+   Anestésicos Locais
+════════════════════════════════════════ */
+function renderAL() {
+  const el = document.getElementById('tab-al');
+  const w = W();
+  if (!w) { el.innerHTML = noWeight(); return; }
+
+  // Card builder específico para AL
+  // concs = [{label, pct, mgml}]
+  // maxDose = min(doseKg * w, absMax)
+  function alCard({ id, name, color, sub, doses, concs, onset, duration, notes, badges }) {
+    let html = `<div class="drug-card">
+      <div class="drug-header">
+        <div>
+          <div class="drug-name" style="color:${color}">${name}</div>
+          <div class="drug-subtitle">${sub}</div>
+        </div>
+        <div class="drug-conc" style="text-align:right;line-height:1.4">
+          <span style="font-size:0.6rem;color:var(--muted)">início</span><br>${onset}<br>
+          <span style="font-size:0.6rem;color:var(--muted)">duração</span><br>${duration}
+        </div>
+      </div>`;
+
+    // dose rows + volume table per concentration
+    for (const d of doses) {
+      const maxMg = Math.min(d.doseKg * w, d.absMax);
+      html += `
+      <div style="padding:0 14px 4px">
+        <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;
+                    color:${d.vaso ? 'var(--orange)' : 'var(--muted)'};margin-bottom:6px">
+          ${d.label} — dose máx: <span style="color:${color}">${f(maxMg,0)} mg</span>
+          <span style="color:var(--muted);font-weight:400"> (${d.doseKg} mg/kg · máx ${d.absMax} mg)</span>
+        </div>
+        <table class="inf-table" style="margin-bottom:8px">
+          <tr><th>Concentração</th><th>mg/ml</th><th>Vol. máx</th></tr>`;
+      for (const c of concs) {
+        const vol = maxMg / c.mgml;
+        html += `<tr>
+          <td>${c.label}</td>
+          <td class="muted">${c.mgml} mg/ml</td>
+          <td class="hl">${f(vol, vol >= 10 ? 0 : 1)} ml</td>
+        </tr>`;
+      }
+      html += `</table></div>`;
+    }
+
+    if (notes) html += `<div class="dilution-note">${notes}</div>`;
+    if (badges?.length) html += `<div class="badges">${badges.map(b=>`<span class="badge ${b.c}">${b.t}</span>`).join('')}</div>`;
+    return html + `</div>`;
+  }
+
+  const drugs = [
+    alCard({
+      name: 'Lidocaína',
+      color: 'var(--accent)',
+      sub: 'Amida — bloqueios superficiais, venosos, espinhal',
+      onset: '2–5 min', duration: '1–3 h',
+      doses: [
+        { label: 'Sem vasoconstritor', doseKg: 4.5, absMax: 300, vaso: false },
+        { label: 'Com vasoconstritor (epi 1:200.000)', doseKg: 7, absMax: 500, vaso: true },
+      ],
+      concs: [
+        { label: '0,5%', mgml: 5 },
+        { label: '1%',   mgml: 10 },
+        { label: '2%',   mgml: 20 },
+      ],
+      notes: `Amp 2% = 20mg/ml (20ml = 400mg)<br>
+      Raquianestesia hiperbárica: 5% c/ glicose (1,5–2ml)<br>
+      Peridural: 1,5–2% | Tópico: 4–10% | Venoso (Bier): 0,5%`,
+      badges: [
+        { t: 'Antiarrítmico Ib', c: 'bi' },
+        { t: 'LAST: convulsão → arritmia', c: 'br' },
+        { t: 'Intralipid 20% disponível?', c: 'bw' },
+      ],
+    }),
+    alCard({
+      name: 'Bupivacaína',
+      color: 'var(--red)',
+      sub: 'Amida — bloqueios longos, peridural, raquianestesia',
+      onset: '15–30 min', duration: '4–12 h',
+      doses: [
+        { label: 'Sem vasoconstritor', doseKg: 2, absMax: 150, vaso: false },
+        { label: 'Com vasoconstritor (epi 1:200.000)', doseKg: 2.5, absMax: 200, vaso: true },
+      ],
+      concs: [
+        { label: '0,25%', mgml: 2.5 },
+        { label: '0,5%',  mgml: 5   },
+        { label: '0,75%', mgml: 7.5 },
+      ],
+      notes: `Amp 0,5% = 5mg/ml (20ml = 100mg)<br>
+      Raquianestesia pesada (0,5% hiperbárica): 10–15mg = 2–3ml<br>
+      Raquianestesia isobárica (0,5%): 7,5–15mg<br>
+      Peridural analgesia: 0,1–0,25% | Peridural bloqueio: 0,5%`,
+      badges: [
+        { t: 'MAIS cardiotóxica', c: 'br' },
+        { t: 'Evitar IV — fibrilação refratária', c: 'br' },
+        { t: 'Intralipid 20% obrigatório disponível', c: 'bw' },
+      ],
+    }),
+    alCard({
+      name: 'Levobupivacaína',
+      color: 'var(--orange)',
+      sub: 'Amida — isômero S(−) da bupivacaína, menos tóxica',
+      onset: '15–30 min', duration: '4–12 h',
+      doses: [
+        { label: 'Dose máxima', doseKg: 2, absMax: 150, vaso: false },
+      ],
+      concs: [
+        { label: '0,25%', mgml: 2.5 },
+        { label: '0,5%',  mgml: 5   },
+        { label: '0,75%', mgml: 7.5 },
+      ],
+      notes: `Amp 0,5% = 5mg/ml (10ml = 50mg / 20ml = 100mg)<br>
+      Perfil clínico similar à bupivacaína<br>
+      Peridural bloqueio: 0,5–0,75% | Analgesia: 0,1–0,25%<br>
+      Raquianestesia: 0,5% isobárica 10–15mg`,
+      badges: [
+        { t: 'Menos cardiotóxica que Bupivacaína', c: 'bg' },
+        { t: 'LAST possível — mesma precaução', c: 'bw' },
+      ],
+    }),
+    alCard({
+      name: 'Ropivacaína',
+      color: 'var(--green)',
+      sub: 'Amida — bloqueios periféricos, peridural, menos tóxica',
+      onset: '10–20 min', duration: '4–8 h',
+      doses: [
+        { label: 'Dose máxima', doseKg: 3, absMax: 250, vaso: false },
+      ],
+      concs: [
+        { label: '0,2%',  mgml: 2   },
+        { label: '0,5%',  mgml: 5   },
+        { label: '0,75%', mgml: 7.5 },
+        { label: '1%',    mgml: 10  },
+      ],
+      notes: `Amp 0,75% = 7,5mg/ml (10ml = 75mg / 20ml = 150mg)<br>
+      Analgesia peridural/bloqueio contínuo: 0,2%<br>
+      Bloqueios periféricos: 0,5–0,75% | Peridural cirúrgico: 0,75–1%<br>
+      Possui leve vasoconstrição intrínseca`,
+      badges: [
+        { t: 'Menos cardiotóxica', c: 'bg' },
+        { t: 'Vasoconstrição intrínseca', c: 'bg' },
+        { t: 'Preferida em bloqueios periféricos', c: 'bi' },
+      ],
+    }),
+  ];
+
+  // Aviso LAST + Intralipid
+  let html = `<div class="drug-card" style="background:rgba(224,80,80,0.06);border-color:rgba(224,80,80,0.25);margin-bottom:14px">
+    <div style="padding:14px 16px">
+      <div class="drug-name" style="color:var(--red);font-size:0.9rem;margin-bottom:8px">⚠️ LAST — Toxicidade Sistêmica de Anestésico Local</div>
+      <div style="font-size:0.78rem;color:var(--text);line-height:1.6">
+        <strong>SNC:</strong> zumbido, gosto metálico, agitação → convulsão → coma<br>
+        <strong>CV:</strong> bradicardia, bloqueio, TV/FV refratária (bupivacaína)<br>
+        <strong>Tratamento:</strong> parar injeção · via aérea · ACLS · <strong style="color:var(--yellow)">Intralipid 20%</strong><br>
+        &nbsp;&nbsp;Bolus: <strong>${f(w*1.5/1000,1)} g = ${f(w*1.5/0.2/1000,1)} ml</strong> (1,5ml/kg) EV rápido<br>
+        &nbsp;&nbsp;Infusão: <strong>${f(w*0.25/0.2/1000,1)} ml/min</strong> (0,25ml/kg/min) por 30–60min
+      </div>
+    </div>
+  </div>`;
+
+  html += `<div class="sec-hdr">Anestésicos Locais — Dose Máxima por Concentração</div>`;
+  for (const d of drugs) html += d;
+  el.innerHTML = html;
+}
+
+/* ════════════════════════════════════════
+   Vasoativos
+════════════════════════════════════════ */
+function renderVaso() {
+  const w = W();
+  const el = document.getElementById('tab-vaso');
+  if (!w) { el.innerHTML = noWeight(); return; }
+
+  function mkVaso(name, color, sub, conc_mcgml, doseLabel, dosesArr, dilNote, badges, efeitoFn) {
+    let rows = '';
+    dosesArr.forEach(d => {
+      const mlh = d * w * 60 / conc_mcgml;
+      rows += `<tr><td>${d}</td><td class="muted">${efeitoFn ? efeitoFn(d) : ''}</td><td class="hl">${f(mlh,1)}</td></tr>`;
+    });
+    const bdg = badges.map(b => `<span class="badge ${b.c}">${b.t}</span>`).join('');
+    return `<div class="drug-card">
+      <div class="drug-header">
+        <div><div class="drug-name" style="color:${color}">${name}</div><div class="drug-subtitle">${sub}</div></div>
+        <div class="drug-conc">${doseLabel}</div>
+      </div>
+      <div class="dilution-note">${dilNote}</div>
+      <div class="dose-table">
+        <table class="inf-table">
+          <tr><th>Dose (mcg/kg/min)</th><th>Efeito</th><th>ml/h</th></tr>
+          ${rows}
+        </table>
+      </div>
+      <div class="badges">${bdg}</div>
+    </div>`;
+  }
+
+  // Noradrenalina: 4mg/4ml → 4mg + 196ml SF → 20mcg/ml
+  const nora = mkVaso(
+    'Noradrenalina', 'var(--accent)', 'Vasopressor 1ª linha — choque',
+    20, 'mcg/kg/min',
+    [0.05, 0.1, 0.15, 0.2, 0.3],
+    `Amp 4mg/4ml → <strong>4ml + 196ml SF = 20 mcg/ml</strong><br>Dose: 0,01–0,5 mcg/kg/min | Iniciar: 0,05–0,1`,
+    [{ t:'Sepse 1ª linha', c:'bg' }, { t:'Isquemia periférica doses altas', c:'bw' }],
+    d => d<=0.1?'Início':d<=0.2?'Manutenção':'Alta dose'
+  );
+
+  // Dopamina: 5 amp 50mg/10ml → 250mg + 200ml SF → ~1,1mg/ml ≈ usar 5 amp em 200ml = 1mg/ml = 1000mcg/ml
+  const dopa = mkVaso(
+    'Dopamina', 'var(--purple)', 'Inotrópico/vasopressor — dose dependente',
+    1000, 'mcg/kg/min',
+    [2, 5, 10, 15, 20],
+    `5 amp (50mg/10ml) + 200ml SF → <strong>1 mg/ml (1000 mcg/ml)</strong><br>&lt;5: dopaminérgico | 5-10: β¹/β² | &gt;10: α`,
+    [{ t:'Taquiarritmia >20mcg', c:'bw' }, { t:'Menos usado hoje', c:'bi' }],
+    d => d<5?'Dopaminérgico':d<=10?'β¹ inotrópico':'α vasopressor'
+  );
+
+  // Dobutamina: 1 amp 250mg/20ml → 1 amp + 230ml SF → 1mg/ml = 1000mcg/ml
+  const dobut = mkVaso(
+    'Dobutamina', 'var(--green)', 'Inotrópico — IC baixo débito',
+    1000, 'mcg/kg/min',
+    [2, 5, 10, 15, 20],
+    `Amp 250mg/20ml | <strong>1 amp + 230ml SF → 1mg/ml</strong><br>ou concentrada: 4 amp + 170ml → 4mg/ml (÷4 o ml/h)<br>Dose: 2–20 mcg/kg/min (máx 50)`,
+    [{ t:'IC baixo débito', c:'bg' }, { t:'Taquiarritmia alto risco', c:'bw' }],
+    d => d<=5?'Inotrópico':d<=10?'↑DC moderado':'Alto débito'
+  );
+
+  // Adrenalina: 1mg/ml → 1mg + 188ml SF → 60mcg/ml
+  const adre = mkVaso(
+    'Adrenalina (Epinefrina)', 'var(--red)', 'Vasopressor/inotrópico — PCR / anafilaxia',
+    60, 'mcg/kg/min',
+    [0.05, 0.1, 0.3, 0.5, 1.0, 2.0],
+    `Amp 1mg/ml | <strong>1mg (1ml) + 188ml SF → 60 mcg/ml</strong><br>PCR: 1mg bolus EV a cada 3-5min | Anafilaxia: 0,3mg IM`,
+    [{ t:'PCR: 1mg bolus', c:'br' }, { t:'Anafilaxia: 0,3mg IM', c:'bw' }],
+    d => d<=0.1?'Baixa':d<=0.5?'Moderada':'Alta'
+  );
+
+  // Tridil (Nitroglicerina) — dose em mcg/min (não por peso)
+  const tridilDoses = [5, 10, 20, 40, 60, 100, 200];
+  // Amp 5mg/ml (5ml=25mg) → diluir 50mg em 250ml SG5% = 0,2mg/ml = 200mcg/ml
+  const tridilConc = 200; // mcg/ml
+  let tridilRows = '';
+  tridilDoses.forEach(d => {
+    const mlh = d * 60 / tridilConc;
+    tridilRows += `<tr><td>${d}</td><td class="muted">${d<=20?'Angioplast.':d<=60?'Angina/HAS':'Emergência'}</td><td class="hl">${f(mlh,1)}</td></tr>`;
+  });
+
+  const tridil = `<div class="drug-card">
+    <div class="drug-header">
+      <div><div class="drug-name" style="color:var(--yellow)">Tridil (Nitroglicerina)</div><div class="drug-subtitle">Vasodilatador venoso — angina, HAS, ICC</div></div>
+      <div class="drug-conc">mcg/min</div>
+    </div>
+    <div class="dilution-note">Amp 5mg/ml | <strong>50mg + 200ml SG5% → 0,2mg/ml (200 mcg/ml)</strong><br>
+    Dose: 5–200 mcg/min | <strong>Dose não é por peso</strong><br>Usar vidro/equipo opaco. Tolerância em 24-48h.</div>
+    <div class="dose-table"><table class="inf-table">
+      <tr><th>Dose (mcg/min)</th><th>Indicação</th><th>ml/h</th></tr>
+      ${tridilRows}
+    </table></div>
+    <div class="badges"><span class="badge bg">Angina instável</span><span class="badge bg">IC aguda</span><span class="badge bw">Tolerância 24-48h</span><span class="badge br">CI: hipotensão, sildenafil</span></div>
+  </div>`;
+
+  // Nipride (Nitroprussiato) — mcg/kg/min, proteger da luz
+  const nipConc_mcgml = 200; // 50mg em 250ml SG5% → 0,2mg/ml = 200mcg/ml
+  const nipDoses = [0.3, 0.5, 1.0, 2.0, 3.0, 5.0, 8.0, 10.0];
+  let nipRows = '';
+  nipDoses.forEach(d => {
+    const mlh = d * w * 60 / nipConc_mcgml;
+    const eff = d <= 0.5 ? 'Mín' : d <= 2 ? 'Moderado' : d <= 5 ? 'Alto' : 'Máx (cianeto!)';
+    nipRows += `<tr><td>${d}</td><td class="muted">${eff}</td><td class="hl">${f(mlh,1)}</td></tr>`;
+  });
+
+  const nipride = `<div class="drug-card" style="border-color: rgba(244,196,48,0.25)">
+    <div class="drug-header">
+      <div><div class="drug-name" style="color:var(--yellow)">Nipride (Nitroprussiato)</div><div class="drug-subtitle">Vasodilatador arteriolar — crise hipertensiva</div></div>
+      <div class="drug-conc">mcg/kg/min</div>
+    </div>
+    <div class="dilution-note" style="border-left: 2px solid var(--yellow); border-radius: 0 8px 8px 0; padding-left:10px">
+      ⚠️ <strong>PROTEGER DA LUZ</strong> (papel alumínio)<br>
+      Amp 50mg/5ml | <strong>50mg + 245ml SG5% → 0,2mg/ml (200 mcg/ml)</strong><br>
+      Dose: 0,3–10 mcg/kg/min | Toxicidade por cianeto &gt;3 mcg/kg/min por &gt;72h<br>
+      Máximo: <strong>10 mcg/kg/min</strong></div>
+    <div class="dose-table"><table class="inf-table">
+      <tr><th>Dose (mcg/kg/min)</th><th>Risco</th><th>ml/h</th></tr>
+      ${nipRows}
+    </table></div>
+    <div class="badges"><span class="badge br">Proteger da luz obrigatório</span><span class="badge bw">Toxicidade cianeto &gt;3 mcg/kg/min</span><span class="badge bi">Meia-vida: 2min</span></div>
+  </div>`;
+
+  let html = `<div class="sec-hdr">Vasopressores</div>`;
+  html += nora + dopa;
+  html += `<div class="sec-hdr">Inotrópicos</div>`;
+  html += dobut + adre;
+  html += `<div class="sec-hdr">Vasodilatadores</div>`;
+  html += tridil + nipride;
+
+  el.innerHTML = html;
+}
+
+/* ════════════════════════════════════════
+   PCR
+════════════════════════════════════════ */
+function renderPCR() {
+  const w = W();
+  const el = document.getElementById('tab-pcr');
+
+  function row(l, v) {
+    return `<div class="pcr-row"><span class="pcr-l">${l}</span><span class="pcr-v">${v}</span></div>`;
+  }
+
+  let html = `<div class="sec-hdr">Drogas de PCR</div>`;
+
+  html += `<div class="pcr-card">
+    <div class="pcr-title">🔴 ADRENALINA</div>
+    ${row('Dose adulto', '1 mg EV/IO bolus')}
+    ${row('Intervalo', 'A cada 3–5 minutos')}
+    ${row('Apresentação', 'Amp 1mg/ml (1ml)')}
+    ${w ? row('Pediátrico 0,01 mg/kg', `${f(w*0.01,3)} mg = ${f(w*0.01,3)} ml`) : ''}
+    ${row('Pós-PCR', '0,1–0,5 mcg/kg/min infusão')}
+  </div>`;
+
+  html += `<div class="pcr-card">
+    <div class="pcr-title">🔴 AMIODARONA — FV/TV sem pulso</div>
+    ${row('1ª dose', '300 mg EV bolus (em 20ml SG5%)')}
+    ${row('2ª dose', '150 mg EV bolus')}
+    ${row('Manutenção pós-reversão', '1 mg/min × 6h → 0,5 mg/min × 18h')}
+    ${row('Apresentação', '150mg/3ml (50mg/ml)')}
+  </div>`;
+
+  html += `<div class="pcr-card">
+    <div class="pcr-title">🟡 ATROPINA — Bradicardia</div>
+    ${row('Dose', '0,5 mg EV — repetir até 3mg total')}
+    ${row('Intervalo', '3–5 minutos')}
+    ${row('Obs', 'Dose <0,5mg pode causar bradicardia paradoxal')}
+  </div>`;
+
+  html += `<div class="pcr-card">
+    <div class="pcr-title">🟡 BICARBONATO — Hipercalemia / Acidose</div>
+    ${w ? row('Dose (1 mEq/kg)', `${f(w,0)} mEq = ${f(w,0)} ml (NaHCO₃ 8,4%)`) : row('Dose','1 mEq/kg')}
+    ${row('Indicação', 'Hipercalemia, pH <6,9, intox. ATC')}
+    ${row('Cuidado', 'Não misturar com Ca²⁺')}
+  </div>`;
+
+  html += `<div class="pcr-card" style="border-color:rgba(77,142,247,0.25);background:rgba(77,142,247,0.05)">
+    <div class="pcr-title" style="color:var(--accent)">🔵 SULFATO DE MAGNÉSIO</div>
+    ${row('Torsades de Pointes', '1–2 g EV em 15min')}
+    ${row('PCR por Torsades', '1–2 g bolus EV')}
+    ${row('Eclâmpsia', '4–6 g em 15–20min → manutenção 1–2 g/h')}
+    ${row('Apresentação', 'MgSO₄ 10% (100mg/ml)')}
+  </div>`;
+
+  html += `<div class="pcr-card">
+    <div class="pcr-title">🔴 DESFIBRILAÇÃO</div>
+    ${row('Bifásico', '120–200 J (conforme fabricante)')}
+    ${row('Monofásico', '360 J')}
+    ${w ? row('Pediátrico (4 J/kg)', `${f(w*4,0)} J`) : ''}
+    ${row('RCP pós-choque', 'Retomar imediatamente por 2 min')}
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+/* ════════════════════════════════════════
+   Card builder
+════════════════════════════════════════ */
+function buildCard(d) {
+  const mode = modes[d.id] || 'iot';
+  const wtColor = wTypeColor[d.wtype] || 'var(--muted)';
+
+  let html = `<div class="drug-card">
+    <div class="drug-header">
+      <div>
+        <div class="drug-name" style="color:${d.color}">${d.name}${d.wtype ? `<span class="wtype-badge" style="color:${wtColor};border-color:${wtColor}20;background:${wtColor}15">${d.wtype}</span>` : ''}</div>
+        <div class="drug-subtitle">${d.sub}</div>
+      </div>
+      <div class="drug-conc">${d.conc}</div>
+    </div>`;
+
+  if (d.hasModes) {
+    html += `<div class="mode-toggle">
+      <button class="mode-btn ${mode==='iot'?'active':''}" onclick="toggleMode('${d.id}','iot')">Bolus / IOT</button>
+      <button class="mode-btn ${mode==='inf'?'active':''}" onclick="toggleMode('${d.id}','inf')">Infusão Contínua</button>
+    </div>`;
+  }
+
+  if (!d.hasModes || mode === 'iot') {
+    if (d.iotRows && d.iotRows.length > 0) {
+      html += `<div class="dose-table">`;
+      d.iotRows.forEach(r => {
+        html += `<div class="dose-row">
+          <span class="dose-label">${r.l}</span>
+          <span class="dose-val">${r.v}<span class="dose-unit">${r.u||''}</span></span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    if (d.iotNote) html += `<div class="dilution-note">${d.iotNote}</div>`;
+  }
+
+  if (d.hasModes && mode === 'inf') {
+    html += d.infTable || '';
+    if (d.infNote) html += `<div class="dilution-note">${d.infNote}</div>`;
+  }
+
+  if (!d.hasModes && d.infTable) {
+    html += d.infTable;
+    if (d.infNote) html += `<div class="dilution-note">${d.infNote}</div>`;
+  }
+
+  if (d.badges && d.badges.length) {
+    html += `<div class="badges">${d.badges.map(b=>`<span class="badge ${b.c}">${b.t}</span>`).join('')}</div>`;
+  }
+
+  return html + `</div>`;
+}
+
+/* infusion table helper */
+function infTable_wt(wt, rows, unitLabel) {
+  let t = `<div class="dose-table"><table class="inf-table">
+    <tr><th>Dose (${unitLabel})</th><th>Efeito</th><th>ml/h</th></tr>`;
+  rows.forEach(({d, eff, conc_mcg_ml}) => {
+    const mlh = d * wt / conc_mcg_ml;
+    t += `<tr><td>${d}</td><td class="muted">${eff}</td><td class="hl">${f(mlh, mlh < 1 ? 2 : 1)}</td></tr>`;
+  });
+  return t + `</table></div>`;
+}
+
+/* ════════════════════════════════════════
+   Hidratação Perioperatória
+════════════════════════════════════════ */
+function renderHid() {
+  const el = document.getElementById('tab-hid');
+  const w = W();
+  const jejum = parseFloat(document.getElementById('jejum')?.value) || 0;
+
+  // Holliday-Segar: 4-2-1 rule
+  function maintenance(kg) {
+    let r = 0;
+    if (kg <= 10)       r = 4 * kg;
+    else if (kg <= 20)  r = 40 + 2 * (kg - 10);
+    else                r = 60 + 1 * (kg - 20);
+    return r; // ml/h
+  }
+
+  const maint = w ? maintenance(w) : 0;
+  const deficit = maint * jejum;
+  const h1 = deficit * 0.5 + maint;
+  const h2 = deficit * 0.25 + maint;
+  const h3 = deficit * 0.25 + maint;
+
+  let html = `<div class="sec-hdr">Hidratação Perioperatória</div>`;
+
+  html += `<div class="drug-card" style="margin-bottom:14px">
+    <div class="drug-header">
+      <div><div class="drug-name" style="color:var(--accent)">Dados do Paciente</div>
+      <div class="drug-subtitle">Regra 4-2-1 (Holliday-Segar)</div></div>
+    </div>
+    <div class="dose-table">
+      <div class="dose-row">
+        <span class="dose-label">Tempo de jejum</span>
+        <span class="dose-val">
+          <input type="number" id="jejum" inputmode="decimal" placeholder="8" min="0" max="24"
+            value="${jejum||''}"
+            style="width:70px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
+                   color:var(--text);font-size:1rem;font-weight:700;padding:5px 8px;outline:none;text-align:right"
+            oninput="renderHid()">
+          <span class="dose-unit"> h</span>
+        </span>
+      </div>
+    </div>
+  </div>`;
+
+  if (!w) { el.innerHTML = html + noWeight(); return; }
+
+  html += `<div class="drug-card">
+    <div class="drug-header">
+      <div><div class="drug-name" style="color:var(--green)">Taxa de Manutenção</div>
+      <div class="drug-subtitle">4 ml/kg/h (≤10kg) + 2 ml/kg/h (10–20kg) + 1 ml/kg/h (&gt;20kg)</div></div>
+      <div class="drug-conc">${f(maint,0)} ml/h</div>
+    </div>
+    <div class="dose-table">
+      <div class="dose-row"><span class="dose-label">Manutenção/hora</span><span class="dose-val">${f(maint,0)}<span class="dose-unit"> ml/h</span></span></div>
+      <div class="dose-row"><span class="dose-label">Manutenção/dia</span><span class="dose-val">${f(maint*24,0)}<span class="dose-unit"> ml/24h</span></span></div>
+    </div>
+  </div>`;
+
+  if (jejum > 0) {
+    html += `<div class="drug-card">
+      <div class="drug-header">
+        <div><div class="drug-name" style="color:var(--orange)">Déficit de Jejum</div>
+        <div class="drug-subtitle">Manutenção × horas de jejum — repor nas primeiras 3h</div></div>
+        <div class="drug-conc">${f(deficit,0)} ml</div>
+      </div>
+      <div class="dose-table">
+        <div class="dose-row"><span class="dose-label">Déficit total (${f(maint,0)} × ${jejum}h)</span><span class="dose-val">${f(deficit,0)}<span class="dose-unit"> ml</span></span></div>
+        <div class="dose-row" style="background:rgba(77,142,247,0.05);border-radius:6px;padding:8px 6px;margin-top:4px">
+          <span class="dose-label">🕐 1ª hora (50% déficit + manutenção)</span>
+          <span class="dose-val" style="color:var(--accent)">${f(h1,0)}<span class="dose-unit"> ml/h</span></span>
+        </div>
+        <div class="dose-row">
+          <span class="dose-label">🕑 2ª hora (25% déficit + manutenção)</span>
+          <span class="dose-val">${f(h2,0)}<span class="dose-unit"> ml/h</span></span>
+        </div>
+        <div class="dose-row">
+          <span class="dose-label">🕒 3ª hora (25% déficit + manutenção)</span>
+          <span class="dose-val">${f(h3,0)}<span class="dose-unit"> ml/h</span></span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  html += `<div class="drug-card">
+    <div class="drug-header">
+      <div><div class="drug-name" style="color:var(--purple)">Perdas Intraoperatórias</div>
+      <div class="drug-subtitle">Adicionar à manutenção conforme trauma cirúrgico</div></div>
+    </div>
+    <div class="dose-table">
+      <div class="dose-row"><span class="dose-label">Trauma mínimo  2–4 ml/kg/h</span><span class="dose-val">${f(w*2,0)}–${f(w*4,0)}<span class="dose-unit"> ml/h</span></span></div>
+      <div class="dose-row"><span class="dose-label">Trauma moderado  4–6 ml/kg/h</span><span class="dose-val">${f(w*4,0)}–${f(w*6,0)}<span class="dose-unit"> ml/h</span></span></div>
+      <div class="dose-row"><span class="dose-label">Trauma grave  6–10 ml/kg/h</span><span class="dose-val">${f(w*6,0)}–${f(w*10,0)}<span class="dose-unit"> ml/h</span></span></div>
+    </div>
+    <div class="dilution-note">Repor sangramento 1:3 (cristaloide) ou 1:1 (coloide/CH)<br>
+    Hto alvo: ≥21% (saudável) / ≥28% (cardiopata) | Diurese: 0,5–1 ml/kg/h</div>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+update();
+
+/* ════════════════════════════════════════
+   Voláteis — Consumo de Anestésicos Inalatórios
+════════════════════════════════════════ */
+const VOL_AGENTS = {
+  sevo: {name:'Sevorane',  d:1.53, pm:200.05},
+  iso:  {name:'Isoflurano',d:1.49, pm:184.5 },
+  des:  {name:'Desflurano',d:1.47, pm:168.04},
+  halo: {name:'Halotano',  d:1.87, pm:197.38},
 };
-let currentAgent = 'sevo';
+let volCurrentAgent = 'sevo';
+let volChartInst = null;
 
-function setAgent(key,btn){
-  currentAgent = key;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+function volSetAgent(key, btn) {
+  volCurrentAgent = key;
+  document.querySelectorAll('#tab-vol .v-tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('tot-agent').textContent = AGENTS[key].name;
-  calc();
+  document.getElementById('vol-tot-agent').textContent = VOL_AGENTS[key].name;
+  volCalc();
 }
 
-function getFactor(temp){
-  const a = AGENTS[currentAgent];
-  return (a.d * 22400 * (273+temp)) / (a.pm * 273);
+function volGetFactor(temp) {
+  const a = VOL_AGENTS[volCurrentAgent];
+  return (a.d * 22400 * (273 + temp)) / (a.pm * 273);
 }
 
-function timeStrToMin(val){
-  if(!val) return 0;
-  const [h,m] = val.split(':').map(Number);
-  return h*60+m;
+function volTimeStrToMin(val) {
+  if (!val) return 0;
+  const [h, m] = val.split(':').map(Number);
+  return h * 60 + m;
 }
 
-function addMinutes(timeVal, mins){
-  const base = timeStrToMin(timeVal);
-  const total = (base + mins) % (24*60);
-  const h = Math.floor(total/60);
+function volAddMinutes(timeVal, mins) {
+  const base = volTimeStrToMin(timeVal);
+  const total = (base + mins) % (24 * 60);
+  const h = Math.floor(total / 60);
   const m = total % 60;
   return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
 }
 
-function updateSliderFill(slider){
-  const min = parseFloat(slider.min);
-  const max = parseFloat(slider.max);
-  const val = parseFloat(slider.value);
-  const pct = ((val - min) / (max - min) * 100).toFixed(1);
-  slider.style.setProperty('--pct', pct+'%');
+function volUpdateSliderFill(slider) {
+  const min = parseFloat(slider.min), max = parseFloat(slider.max), val = parseFloat(slider.value);
+  slider.style.setProperty('--pct', ((val - min) / (max - min) * 100).toFixed(1) + '%');
 }
 
-function getDur(phase){
-  return parseInt(document.getElementById(phase+'-dur-slide').value);
+function volGetDur(phase) {
+  return parseInt(document.getElementById('vol-' + phase + '-dur-slide').value);
 }
 
-function updateTimeDisplay(phase){
-  const startEl = document.getElementById(phase+'-start');
-  const dur     = getDur(phase);
-  const endTime = addMinutes(startEl.value, dur);
-
-  document.getElementById(phase+'-display-start').textContent = startEl.value || '—';
-  document.getElementById(phase+'-end-display').textContent   = endTime;
-  document.getElementById(phase+'-dur-val').textContent       = dur;
-
-  updateSliderFill(document.getElementById(phase+'-dur-slide'));
-
-  // propaga fim da saturação como início da manutenção automaticamente
-  if(phase === 's' && startEl.value){
-    const mStart = document.getElementById('m-start');
-    mStart.value = endTime;
-    document.getElementById('m-display-start').textContent = endTime;
-    // recalcula fim da manutenção com novo início
-    const mDur = getDur('m');
-    const mEnd = addMinutes(endTime, mDur);
-    document.getElementById('m-end-display').textContent = mEnd;
-    updateSliderFill(document.getElementById('m-dur-slide'));
-  }
+function volUpdateTimeDisplay(phase) {
+  const startEl = document.getElementById('vol-' + phase + '-start');
+  const dur = volGetDur(phase);
+  document.getElementById('vol-' + phase + '-display-start').textContent = startEl.value || '—';
+  document.getElementById('vol-' + phase + '-end-display').textContent = volAddMinutes(startEl.value, dur);
+  document.getElementById('vol-' + phase + '-dur-val').textContent = dur;
+  volUpdateSliderFill(document.getElementById('vol-' + phase + '-dur-slide'));
 }
 
-function mlLiq(c,f,d,factor){ return (c/100)*f*d*1000/factor; }
+function volMlLiq(c, fl, d, factor) { return (c / 100) * fl * d * 1000 / factor; }
 
-let chartInst = null;
+function volBuildChart(sC, sF, sD, mC, mF, mD, factor) {
+  const cs = getComputedStyle(document.documentElement);
+  const cY = cs.getPropertyValue('--yellow').trim();
+  const cG = cs.getPropertyValue('--green').trim();
+  const cA = cs.getPropertyValue('--accent').trim();
+  const cM = cs.getPropertyValue('--muted').trim();
+  const cB = cs.getPropertyValue('--border').trim();
 
-function getTheme(){
-  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  return {
-    amber:      dark ? 'rgba(240,167,66,0.75)'  : 'rgba(185,114,0,0.75)',
-    teal:       dark ? 'rgba(63,185,80,0.75)'   : 'rgba(26,127,55,0.75)',
-    blue:       dark ? '#58a6ff'                : '#0051d5',
-    blueFill:   dark ? 'rgba(88,166,255,0.07)'  : 'rgba(0,81,213,0.07)',
-    gridLine:   dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)',
-    borderLine: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)',
-    tickColor:  dark ? '#7d8590'                : '#6e6e73',
-    blueAxis:   dark ? 'rgba(88,166,255,0.2)'   : 'rgba(0,81,213,0.2)',
-  };
-}
-
-function buildChart(sC,sF,sD,mC,mF,mD,factor){
-  const t = getTheme();
-  const totalMin = sD+mD;
-  const step = Math.max(1, Math.round(totalMin/40));
-  const labels=[],satData=[],manData=[],cumData=[];
-  let cum=0;
-  for(let t=0;t<=totalMin;t+=step){
-    labels.push(t+'m');
+  const totalMin = sD + mD;
+  const step = Math.max(1, Math.round(totalMin / 40));
+  const labels = [], satData = [], manData = [], cumData = [];
+  let cum = 0;
+  for (let t = 0; t <= totalMin; t += step) {
+    labels.push(t + 'm');
     const inSat = t < sD;
-    const dS = inSat ? mlLiq(sC,sF,step,factor) : 0;
-    const dM = inSat ? 0 : mlLiq(mC,mF,step,factor);
+    const dS = inSat ? volMlLiq(sC, sF, step, factor) : 0;
+    const dM = inSat ? 0 : volMlLiq(mC, mF, step, factor);
     satData.push(parseFloat(dS.toFixed(2)));
     manData.push(parseFloat(dM.toFixed(2)));
-    cum += dS+dM;
+    cum += dS + dM;
     cumData.push(parseFloat(cum.toFixed(2)));
   }
-  const ctx = document.getElementById('myChart').getContext('2d');
-  if(chartInst) chartInst.destroy();
-  chartInst = new Chart(ctx,{
-    type:'bar',
-    data:{
+
+  const ctx = document.getElementById('vol-chart').getContext('2d');
+  if (volChartInst) volChartInst.destroy();
+  volChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
       labels,
-      datasets:[
-        {label:'Saturação', data:satData,backgroundColor:'rgba(240,167,66,.7)',borderRadius:2,order:2},
-        {label:'Manutenção',data:manData,backgroundColor:'rgba(63,185,80,.7)', borderRadius:2,order:2},
-        {label:'Acumulado', data:cumData,type:'line',borderColor:'#58a6ff',
-         backgroundColor:'rgba(88,166,255,.07)',borderWidth:2,pointRadius:0,
-         fill:true,yAxisID:'y2',order:1,tension:.3}
+      datasets: [
+        {label:'Saturação', data:satData, backgroundColor:cY+'b3', borderRadius:2, order:2},
+        {label:'Manutenção',data:manData, backgroundColor:cG+'b3', borderRadius:2, order:2},
+        {label:'Acumulado', data:cumData, type:'line', borderColor:cA,
+         backgroundColor:cA+'20', borderWidth:2, pointRadius:0,
+         fill:true, yAxisID:'y2', order:1, tension:.3}
       ]
     },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
         legend:{display:false},
         tooltip:{
-          backgroundColor:'#161b22',borderColor:'rgba(255,255,255,.1)',borderWidth:1,
-          titleColor:'#7d8590',bodyColor:'#e6edf3',
+          backgroundColor:'var(--card)', borderColor:cB, borderWidth:1,
+          titleColor:cM, bodyColor:'var(--text)',
           callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+' mL'}
         }
       },
       scales:{
-        x:{stacked:true,ticks:{color:t.tickColor,font:{size:10},maxTicksLimit:8},grid:{color:t.gridLine},border:{color:t.borderLine}},
-        y:{stacked:true,ticks:{color:t.tickColor,font:{size:10}},grid:{color:t.gridLine},border:{color:t.borderLine},title:{display:true,text:'mL/intervalo',color:t.tickColor,font:{size:10}}},
-        y2:{position:'right',ticks:{color:t.blue,font:{size:10}},grid:{display:false},border:{color:t.blueAxis},title:{display:true,text:'acumulado (mL)',color:t.blue,font:{size:10}}}
+        x:{stacked:true, ticks:{color:cM,font:{size:10}}, grid:{color:cB+'66'}, border:{color:cB}},
+        y:{stacked:true, ticks:{color:cM,font:{size:10}}, grid:{color:cB+'66'}, border:{color:cB},
+           title:{display:true,text:'mL/intervalo',color:cM,font:{size:10}}},
+        y2:{position:'right', ticks:{color:cA,font:{size:10}}, grid:{display:false}, border:{color:cA+'44'},
+            title:{display:true,text:'acumulado (mL)',color:cA,font:{size:10}}}
       }
     }
   });
 }
 
-function calc(){
-  const temp = parseFloat(document.getElementById('temp').value);
-  document.getElementById('temp-v').textContent = temp;
-  const factor = getFactor(temp);
-  document.getElementById('factor-v').textContent = factor.toFixed(0);
+function volCalc() {
+  if (typeof Chart === 'undefined') return;
+  const tempEl = document.getElementById('vol-temp');
+  if (!tempEl) return;
 
-  updateTimeDisplay('s');
-  updateTimeDisplay('m');
+  const temp = parseFloat(tempEl.value);
+  document.getElementById('vol-temp-v').textContent = temp;
+  const factor = volGetFactor(temp);
+  document.getElementById('vol-factor-v').textContent = factor.toFixed(0);
 
-  const sD = getDur('s');
-  const mD = getDur('m');
-  const sC = parseFloat(document.getElementById('s-conc').value);
-  const sF = parseFloat(document.getElementById('s-flow').value);
-  const mC = parseFloat(document.getElementById('m-conc').value);
-  const mF = parseFloat(document.getElementById('m-flow').value);
+  volUpdateTimeDisplay('s');
+  // sync maintenance start to saturation end
+  const sStartVal = document.getElementById('vol-s-start').value;
+  const sDurSync  = volGetDur('s');
+  document.getElementById('vol-m-start').value = volAddMinutes(sStartVal, sDurSync);
+  volUpdateTimeDisplay('m');
 
-  document.getElementById('s-conc-v').textContent = sC.toFixed(1);
-  document.getElementById('s-flow-v').textContent = sF.toFixed(1);
-  document.getElementById('m-conc-v').textContent = mC.toFixed(1);
-  document.getElementById('m-flow-v').textContent = mF.toFixed(1);
+  const sD = volGetDur('s'), mD = volGetDur('m');
+  const sC = parseFloat(document.getElementById('vol-s-conc').value);
+  const sF = parseFloat(document.getElementById('vol-s-flow').value);
+  const mC = parseFloat(document.getElementById('vol-m-conc').value);
+  const mF = parseFloat(document.getElementById('vol-m-flow').value);
 
-  const sMl  = mlLiq(sC,sF,sD,factor);
-  const mMl  = mlLiq(mC,mF,mD,factor);
-  const sVap = (sC/100)*sF*sD;
-  const total = sMl+mMl;
-  const totalDur = sD+mD;
+  document.getElementById('vol-s-conc-v').textContent = sC.toFixed(1);
+  document.getElementById('vol-s-flow-v').textContent = sF.toFixed(1);
+  document.getElementById('vol-m-conc-v').textContent = mC.toFixed(1);
+  document.getElementById('vol-m-flow-v').textContent = mF.toFixed(1);
 
-  document.getElementById('s-ml').textContent   = sMl.toFixed(1);
-  document.getElementById('s-vap').textContent  = sVap.toFixed(1);
-  document.getElementById('s-rate').textContent = ((sMl/sD)*60).toFixed(1);
-  document.getElementById('m-ml').textContent   = mMl.toFixed(1);
-  document.getElementById('m-vap').textContent  = ((mC/100)*mF*mD).toFixed(1);
-  document.getElementById('m-rate').textContent = ((mMl/mD)*60).toFixed(1);
-  const mDurH=Math.floor(mD/60),mDurM=mD%60;
-  document.getElementById('m-dur-val').textContent = mDurH>0 ? mDurH+'h'+(mDurM>0?mDurM+'m':'') : mD;
+  const sMl = volMlLiq(sC, sF, sD, factor);
+  const mMl = volMlLiq(mC, mF, mD, factor);
+  const total = sMl + mMl;
+  const totalDur = sD + mD;
 
-  document.getElementById('tot-all').textContent = total.toFixed(1);
-  document.getElementById('tot-sat').textContent = sMl.toFixed(1);
-  document.getElementById('tot-man').textContent = mMl.toFixed(1);
+  document.getElementById('vol-s-ml').textContent   = sMl.toFixed(1);
+  document.getElementById('vol-s-vap').textContent  = ((sC/100)*sF*sD).toFixed(1);
+  document.getElementById('vol-s-rate').textContent = ((sMl/sD)*60).toFixed(1);
+  document.getElementById('vol-m-ml').textContent   = mMl.toFixed(1);
+  document.getElementById('vol-m-vap').textContent  = ((mC/100)*mF*mD).toFixed(1);
+  document.getElementById('vol-m-rate').textContent = ((mMl/mD)*60).toFixed(1);
 
-  const h=Math.floor(totalDur/60), m=totalDur%60;
-  document.getElementById('tot-dur').textContent = h>0 ? h+'h '+m+'min' : m+' min';
-  document.getElementById('warn-box').classList.toggle('visible', total>50);
+  const mDurH = Math.floor(mD/60), mDurM = mD%60;
+  document.getElementById('vol-m-dur-val').textContent = mDurH>0 ? mDurH+'h'+(mDurM>0?mDurM+'m':'') : mD;
 
-  buildChart(sC,sF,sD,mC,mF,mD,factor);
+  document.getElementById('vol-tot-all').textContent = total.toFixed(1);
+  document.getElementById('vol-tot-sat').textContent = sMl.toFixed(1);
+  document.getElementById('vol-tot-man').textContent = mMl.toFixed(1);
+  const h = Math.floor(totalDur/60), m = totalDur%60;
+  document.getElementById('vol-tot-dur').textContent = h>0 ? h+'h '+m+'min' : m+' min';
+  document.getElementById('vol-warn-box').classList.toggle('visible', total>50);
+
+  volBuildChart(sC, sF, sD, mC, mF, mD, factor);
 }
 
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', calc);
-/* listeners */
-['s-conc','s-flow','m-conc','m-flow','temp'].forEach(id=>
-  document.getElementById(id).addEventListener('input',calc)
-);
-['s-start','m-start'].forEach(id=>
-  document.getElementById(id).addEventListener('change',calc)
-);
-['s-dur-slide','m-dur-slide'].forEach(id=>
-  document.getElementById(id).addEventListener('input',calc)
-);
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" onload="calc()"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </body>
 </html>

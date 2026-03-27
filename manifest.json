@@ -1,12 +1,12 @@
 {
-  "name": "Anest Tools",
-  "short_name": "Anest",
-  "description": "Calculadoras clínicas de anestesia",
+  "name": "DrugCalc — Anestesia & UTI",
+  "short_name": "DrugCalc",
+  "description": "Calculadora de drogas para anestesia, UTI e urgência",
   "start_url": "/anest-tools/",
   "scope": "/anest-tools/",
   "display": "standalone",
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
+  "background_color": "#0d0f18",
+  "theme_color": "#0d0f18",
   "orientation": "portrait",
   "icons": [
     {

@@ -1,8 +1,12 @@
-const CACHE = 'anest-tools-v1';
+// ⚠️  Atualize o caminho abaixo com o nome do seu repositório no GitHub
+//     Exemplo: se o repo for github.com/seunome/drugcalc → '/drugcalc/'
+const REPO = '/anest-tools/';
+
+const CACHE = 'anest-tools-v2';
 const ASSETS = [
-  '/anest-tools/',
-  '/anest-tools/index.html',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js'
+  REPO,
+  REPO + 'index.html',
+  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
 ];
 
 self.addEventListener('install', e => {
