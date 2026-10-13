@@ -267,7 +267,7 @@
    * @type {{apfel: Object, stop: Object, rcri: Object, caprini: Object, aldrete: Object}}
    */
   const state = {
-    apfel: { smoker: false, history: false, opioid: false },
+    apfel: { nonSmoker: false, history: false, opioid: false },
     stop: { snore: false, tired: false, apnea: false, pressure: false, bmi: false, age: false, neck: false, male: false },
     rcri: { surgery: false, ihd: false, chf: false, cva: false, insulin: false, creat: false },
     caprini: { age: '', surgery: '', mobility: '', flags: {} },
@@ -355,10 +355,10 @@
   const renderers = {
     apfel() {
       const p = panel();
-      const r = apfel({ female: p.female, smoker: state.apfel.smoker, history: state.apfel.history, opioid: state.apfel.opioid });
+      const r = apfel({ female: p.female, smoker: !state.apfel.nonSmoker, history: state.apfel.history, opioid: state.apfel.opioid });
       const body = `
         ${auto(p.female, 'Sexo feminino')}
-        ${cb('apfel', 'smoker', 'Fumante (não fumante pontua)', state.apfel.smoker)}
+        ${cb('apfel', 'nonSmoker', 'Não fumante', state.apfel.nonSmoker)}
         ${cb('apfel', 'history', 'História de NVPO ou cinetose', state.apfel.history)}
         ${cb('apfel', 'opioid', 'Opioide no pós-operatório', state.apfel.opioid)}
         <div class="sc-res"><b>${r.points}/4 — risco de NVPO ${r.risk}%</b><div>${r.advice}</div>
