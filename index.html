@@ -1230,6 +1230,23 @@ function renderIOT() {
       infNote:`Diluição: 5 amp (500mcg) + 90ml SF → <strong>5 mcg/ml</strong> | Faixa típica: 25–200 mcg/h`,
       badges:[{t:'Analgesia',c:'bg'},{t:'Depressão resp.',c:'br'}],
     }})(),
+    (() => { const wt = mk('LBW'); return {
+      id:'remi', wtype:'LBW', name:'Remifentanil', color:'var(--purple)',
+      sub:'Opioide ultracurto — TIVA / supressão da laringoscopia', conc:'50 mcg/ml (após reconstituição)', hasModes:true,
+      iotRows:[
+        { l:'Bolus  0,5 mcg/kg', v:`${f(wt*0.5/50,2)} ml`, u:`= ${f(wt*0.5,0)} mcg (lento, 30–60 s)` },
+        { l:'Bolus  1 mcg/kg', v:`${f(wt*1/50,2)} ml`, u:`= ${f(wt*1,0)} mcg (lento, 30–60 s)` },
+      ],
+      iotNote:`Frasco-ampola liofilizado (1, 2 ou 5 mg) | Reconstituir e diluir: <strong>2 mg + 38 ml SF → 50 mcg/ml</strong><br>Bolus rápido: bradicardia, hipotensão, rigidez torácica | <strong>Sem efeito analgésico residual — planejar analgesia antes de suspender</strong>`,
+      infTable: (() => {
+        const rows = [[0.05,'Sedação / TIVA leve'],[0.1,'Analgesia intraop.'],[0.2,'Estímulo intenso'],[0.3,'Estímulo máx.']];
+        let t = `<div class="dose-table"><table class="inf-table"><tr><th>mcg/kg/min</th><th>Efeito</th><th>ml/h</th></tr>`;
+        rows.forEach(([d,eff]) => { const mlh = d*60*wt/50; t += `<tr><td>${d}</td><td class="muted">${eff}</td><td class="hl">${f(mlh, mlh < 10 ? 1 : 0)}</td></tr>`; });
+        return t + `</table></div>`;
+      })(),
+      infNote:`Diluição: 2 mg + 38 ml SF → <strong>50 mcg/ml</strong> | Faixa usual 0,05–0,3 mcg/kg/min | Calculado pelo peso magro (LBW) — em obesos não usar peso real<br>Infusão em linha exclusiva ou com fluxo de arrasto: não deixar resíduo na via venosa`,
+      badges:[{t:'Meia-vida contexto ~3 min',c:'bg'},{t:'Hiperalgesia/tolerância',c:'bw'},{t:'Depressão resp.',c:'br'}],
+    }})(),
     (() => { const wt = mk('TBW'); return {
       id:'eto', wtype:'TBW', name:'Etomidato', color:'var(--green)',
       sub:'Hipnótico — melhor estabilidade HD', conc:'2 mg/ml (amp 10ml)', hasModes:false,
@@ -1460,17 +1477,6 @@ function renderAdj() {
     {
       hdr: 'Analgésicos — Não Opioides',
       drugs: [
-        (() => { const wt = wByType('TBW'); return {
-          id:'para', wtype:'TBW', name:'Paracetamol EV', color:'var(--green)',
-          sub:'Analgésico / antipirético — 1ª linha pós-op', conc:'10 mg/ml (frasco 100ml = 1g)', hasModes:false,
-          iotRows:[
-            {l:'Dose  15 mg/kg', v:`${f(Math.min(wt*15,1000)/10,1)} ml`, u:`= ${f(Math.min(wt*15,1000),0)} mg`},
-            {l:'Dose padrão adulto', v:'100 ml', u:'= 1g (máx por dose)'},
-          ],
-          iotNote:`Frasco pronto 10mg/ml | <strong>Infundir em 15min</strong><br>
-          Máx 4g/dia | Intervalo ≥ 4h | Reduzir a 2g/dia em hepatopatas`,
-          badges:[{t:'Infundir 15min',c:'bw'},{t:'Máx 1g/dose',c:'bi'},{t:'CI: hepatopatia grave',c:'br'}],
-        }})(),
         (() => { const wt = wByType('TBW'); return {
           id:'dip', wtype:'TBW', name:'Dipirona (Metamizol)', color:'var(--green)',
           sub:'Analgésico / antiespasmódico / antipirético', conc:'500 mg/ml (amp 2ml = 1g)', hasModes:false,

@@ -258,6 +258,7 @@
     { seedId: 'propofol',        name: 'Propofol 10 mg/mL', amount: 500, amountUnit: 'mg', volumeMl: 50, doseUnit: 'mg', perKg: true, timeUnit: 'h', weightType: 'LBW', maxDose: 4, maxRate: null },
     { seedId: 'midazolam',       name: 'Midazolam',       amount: 15,  amountUnit: 'mg',  volumeMl: 15,  doseUnit: 'mg',  perKg: true,  timeUnit: 'h',   weightType: 'IBW', maxDose: 0.1, maxRate: null },
     { seedId: 'fentanil',        name: 'Fentanil',        amount: 500, amountUnit: 'mcg', volumeMl: 100, doseUnit: 'mcg', perKg: false, timeUnit: 'h',   weightType: 'LBW', maxDose: 200, maxRate: null },
+    { seedId: 'remifentanil',    name: 'Remifentanil',    amount: 2,   amountUnit: 'mg',  volumeMl: 40,  doseUnit: 'mcg', perKg: true,  timeUnit: 'min', weightType: 'LBW', maxDose: null, maxRate: null },
     { seedId: 'cetamina',        name: 'Cetamina',        amount: 100, amountUnit: 'mg',  volumeMl: 10,  doseUnit: 'mg',  perKg: true,  timeUnit: 'h',   weightType: 'TBW', maxDose: null, maxRate: null },
   ];
 
