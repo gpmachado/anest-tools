@@ -11,11 +11,11 @@ Clinical drug dose calculator for anaesthesia, critical care, and emergency medi
 ### Patient Panel
 - Weight (kg), height (cm), sex, age
 - Automatic BMI calculation with classification
-- Four weight types used per drug:
+- Four weight types used per drug (never above actual weight):
   - **TBW** — Total Body Weight (actual)
   - **IBW** — Ideal Body Weight (Devine formula)
   - **ABW** — Adjusted Body Weight (Bauer: IBW + 0.4 × (TBW − IBW))
-  - **LBW** — Lean Body Weight (James formula)
+  - **LBW** — Lean Body Weight (Janmahasatian formula)
 
 ### Tabs
 

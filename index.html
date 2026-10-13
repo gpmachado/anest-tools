@@ -81,6 +81,21 @@ body {
 .topbar h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
 .topbar h1 span { color: var(--accent); }
 .topbar .sub { font-size: 0.7rem; color: var(--muted); }
+.about-btn { background: none; border: none; color: var(--muted); font-size: 1.4rem; min-width: 44px; min-height: 44px; cursor: pointer; }
+
+/* ── ABOUT ── */
+#about {
+  margin: auto; max-width: 320px;
+  background: var(--card); color: var(--text);
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: 20px; line-height: 1.5; font-size: 0.85rem;
+}
+#about::backdrop { background: rgba(0,0,0,0.5); }
+#about h2 { font-size: 1.1rem; margin-bottom: 8px; }
+#about p { margin-bottom: 10px; }
+#about a { color: var(--accent); }
+#about .about-note { font-size: 0.72rem; color: var(--muted); }
+#about button { width: 100%; padding: 10px; border: none; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 700; font-size: 0.9rem; }
 
 /* ── PATIENT PANEL ── */
 .patient-panel {
@@ -247,9 +262,10 @@ body {
 }
 .bottom-nav::-webkit-scrollbar { display: none; }
 .nav-btn {
-  flex: 0 0 auto;
-  min-width: 64px;
-  padding: 10px 8px 8px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 10px 1px 8px;
+  white-space: nowrap;
   background: none;
   border: none;
   color: var(--muted);
@@ -265,6 +281,7 @@ body {
 }
 .nav-btn .icon { font-size: 1.25rem; line-height: 1; }
 .nav-btn.active { color: var(--accent); }
+@media (max-width: 340px) { .nav-btn { font-size: 0.52rem; } }
 
 /* ── CONTENT ── */
 .content {
@@ -373,6 +390,9 @@ body {
 }
 .dose-row:last-child { border-bottom: none; }
 .dose-label { font-size: 0.78rem; color: var(--muted); }
+.score-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 0.82rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.score-row input { width: 20px; height: 20px; accent-color: var(--accent); }
+.hid-input { width: 70px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; font-weight: 700; padding: 5px 8px; outline: none; text-align: right; }
 .dose-val {
   font-size: 1.05rem;
   font-weight: 800;
@@ -553,6 +573,9 @@ body {
 #tab-vol .v-dur-block { text-align: center; }
 #tab-vol .v-dur-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
 #tab-vol .v-dur-val { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+#tab-vol .v-dur-input { width: 2.6em; font: inherit; color: inherit; text-align: center; background: none; border: none; border-bottom: 1.5px dashed var(--border); padding: 0; -moz-appearance: textfield; }
+#tab-vol .v-dur-input::-webkit-inner-spin-button, #tab-vol .v-dur-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+#tab-vol .v-dur-input:focus { outline: none; border-bottom-color: var(--accent); }
 #tab-vol .v-dur-unit { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 2px; }
 #tab-vol .v-slider-group { display: flex; flex-direction: column; gap: 12px; }
 #tab-vol .v-slider-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
@@ -633,7 +656,16 @@ body {
     <h1>💊 <span>DrugCalc</span></h1>
     <div class="sub">Anestesia · Urgência · UTI</div>
   </div>
+  <button class="about-btn" onclick="document.getElementById('about').showModal()" aria-label="Sobre">ⓘ</button>
 </div>
+
+<dialog id="about">
+  <h2>💊 DrugCalc</h2>
+  <p>Calculadora de doses para anestesia, UTI e urgência.</p>
+  <p>Desenvolvido por <a href="https://github.com/gpmachado" target="_blank" rel="noopener">@gpmachado</a> no GitHub.</p>
+  <p class="about-note">Uso exclusivo por médico habilitado. Valores de referência — confira sempre com o protocolo institucional.</p>
+  <form method="dialog"><button>Fechar</button></form>
+</dialog>
 
 <div class="patient-panel">
   <div class="patient-row">
@@ -681,8 +713,55 @@ body {
   <div class="tab-pane" id="tab-adj"></div>
   <div class="tab-pane" id="tab-vaso"></div>
   <div class="tab-pane" id="tab-al"></div>
-  <div class="tab-pane" id="tab-hid"></div>
+  <div class="tab-pane" id="tab-hid">
+    <div class="sec-hdr">Hidratação Perioperatória</div>
+    <div class="drug-card" style="margin-bottom:14px">
+      <div class="drug-header"><div><div class="drug-name" style="color:var(--accent)">Dados do Paciente</div>
+      <div class="drug-subtitle">Jejum e hematócrito</div></div></div>
+      <div class="dose-table">
+        <div class="dose-row"><span class="dose-label">Tempo de jejum</span><span class="dose-val">
+          <input type="number" id="jejum" class="hid-input" inputmode="decimal" placeholder="8" min="0" max="24" oninput="renderHid()"><span class="dose-unit"> h</span></span></div>
+        <div class="dose-row"><span class="dose-label">Ht inicial</span><span class="dose-val">
+          <input type="number" id="ht-i" class="hid-input" inputmode="decimal" placeholder="40" min="10" max="70" oninput="renderHid()"><span class="dose-unit"> %</span></span></div>
+        <div class="dose-row"><span class="dose-label">Ht mínimo aceitável</span><span class="dose-val">
+          <input type="number" id="ht-f" class="hid-input" inputmode="decimal" placeholder="21" min="10" max="70" oninput="renderHid()"><span class="dose-unit"> %</span></span></div>
+      </div>
+    </div>
+    <div id="hid-out"></div>
+  </div>
   <div class="tab-pane" id="tab-pcr"></div>
+  <div class="tab-pane" id="tab-lab">
+    <div class="sec-hdr">Exames — Hemograma por idade</div>
+    <div class="drug-card">
+      <div class="drug-header"><div><div class="drug-name" style="color:var(--red)">Hb / Ht</div>
+      <div class="drug-subtitle">Limite inferior por idade (Nathan &amp; Oski / Harriet Lane; adulto OMS)</div></div></div>
+      <div class="dose-table">
+        <div class="dose-row"><span class="dose-label">Idade</span><span class="dose-val"><input type="number" id="lab-age" class="hid-input" inputmode="decimal" placeholder="anos" oninput="renderLab()"> <select id="lab-age-u" class="hid-input" style="width:auto" onchange="renderLab()"><option value="365">anos</option><option value="30.4">meses</option><option value="1">dias</option></select></span></div>
+        <div class="dose-row"><span class="dose-label">Hb</span><span class="dose-val"><input type="number" id="lab-hb" class="hid-input" inputmode="decimal" placeholder="12" oninput="renderLab()"><span class="dose-unit"> g/dL</span></span></div>
+        <div class="dose-row"><span class="dose-label">Ht</span><span class="dose-val"><input type="number" id="lab-ht" class="hid-input" inputmode="decimal" placeholder="36" oninput="renderLab()"><span class="dose-unit"> %</span></span></div>
+      </div>
+      <div id="lab-hb-out"></div>
+    </div>
+    <div class="sec-hdr">Função renal (adulto)</div>
+    <div class="drug-card">
+      <div class="drug-header"><div><div class="drug-name" style="color:var(--accent)">Filtração Glomerular</div>
+      <div class="drug-subtitle">CKD-EPI 2021 (sem raça) · Cockcroft-Gault · idade, sexo e peso do painel</div></div></div>
+      <div class="dose-table">
+        <div class="dose-row"><span class="dose-label">Creatinina</span><span class="dose-val"><input type="number" id="lab-cr" class="hid-input" inputmode="decimal" placeholder="1.0" oninput="renderLab()"><span class="dose-unit"> mg/dL</span></span></div>
+      </div>
+      <div id="lab-cr-out"></div>
+    </div>
+    <div class="sec-hdr">Metabolismo (adulto)</div>
+    <div class="drug-card">
+      <div class="drug-header"><div><div class="drug-name" style="color:var(--orange)">HOMA</div>
+      <div class="drug-subtitle">Resistência insulínica e função de célula β (jejum)</div></div></div>
+      <div class="dose-table">
+        <div class="dose-row"><span class="dose-label">Glicemia</span><span class="dose-val"><input type="number" id="lab-gli" class="hid-input" inputmode="decimal" placeholder="90" oninput="renderLab()"><span class="dose-unit"> mg/dL</span></span></div>
+        <div class="dose-row"><span class="dose-label">Insulina</span><span class="dose-val"><input type="number" id="lab-ins" class="hid-input" inputmode="decimal" placeholder="10" oninput="renderLab()"><span class="dose-unit"> µU/mL</span></span></div>
+      </div>
+      <div id="lab-homa-out"></div>
+    </div>
+  </div>
   <div class="tab-pane" id="tab-vol">
 
     <!-- Agent tabs -->
@@ -711,6 +790,10 @@ body {
         <span>Fator de vaporização (lei dos gases):</span>
         <span class="v-factor-val">1 mL → <span id="vol-factor-v">184</span> mL vapor</span>
       </div>
+      <div class="v-factor-card" style="margin-top:8px">
+        <span>1 CAM ajustada p/ idade (<span id="vol-age">40</span> anos):</span>
+        <span class="v-factor-val"><span id="vol-mac">1.80</span>%</span>
+      </div>
     </div>
 
     <!-- Saturação -->
@@ -727,7 +810,7 @@ body {
         </div>
         <div class="v-dur-slider-wrap">
           <input type="range" class="v-dur-slide v-sat-ds" id="vol-s-dur-slide"
-                 min="1" max="30" step="1" value="5" style="--pct:13.3%" oninput="volCalc()">
+                 min="1" max="30" step="1" value="5" style="--pct:13.3%" oninput="document.getElementById('vol-s-dur-val').value=this.value;volCalc()">
           <div class="v-dur-ticks">
             <span>1min</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30min</span>
           </div>
@@ -745,7 +828,7 @@ body {
           <div class="v-arrow">=</div>
           <div class="v-dur-block">
             <div class="v-dur-label">duração</div>
-            <div class="v-dur-val v-sat-val"><span id="vol-s-dur-val">5</span><span class="v-dur-unit">min</span></div>
+            <div class="v-dur-val v-sat-val"><input type="number" class="v-dur-input" id="vol-s-dur-val" value="5" min="1" max="1440" inputmode="numeric" aria-label="Duração em minutos" oninput="document.getElementById('vol-s-dur-slide').value=this.value;volCalc()"><span class="v-dur-unit">min</span></div>
           </div>
         </div>
       </div>
@@ -755,12 +838,12 @@ body {
             <div class="v-slider-label">Concentração</div>
             <input type="range" class="v-sat-range" id="vol-s-conc" min="1" max="8" step="0.5" value="6" oninput="volCalc()">
           </div>
-          <div class="v-slider-val v-sat-val"><span id="vol-s-conc-v">6.0</span>%</div>
+          <div class="v-slider-val v-sat-val"><span id="vol-s-conc-v">6.0</span>% <small id="vol-s-mac"></small></div>
         </div>
         <div class="v-slider-row">
           <div>
             <div class="v-slider-label">FGF (L/min)</div>
-            <input type="range" class="v-sat-range" id="vol-s-flow" min="1" max="8" step="0.5" value="4" oninput="volCalc()">
+            <input type="range" class="v-sat-range" id="vol-s-flow" min="1" max="8" step="0.1" value="4" oninput="volCalc()">
           </div>
           <div class="v-slider-val v-sat-val"><span id="vol-s-flow-v">4.0</span> L/min</div>
         </div>
@@ -786,7 +869,7 @@ body {
         </div>
         <div class="v-dur-slider-wrap">
           <input type="range" class="v-dur-slide v-man-ds" id="vol-m-dur-slide"
-                 min="5" max="720" step="5" value="60" style="--pct:7.6%" oninput="volCalc()">
+                 min="5" max="720" step="5" value="60" style="--pct:7.6%" oninput="document.getElementById('vol-m-dur-val').value=this.value;volCalc()">
           <div class="v-dur-ticks">
             <span>5min</span><span>2h</span><span>4h</span><span>6h</span><span>8h</span><span>10h</span><span>12h</span>
           </div>
@@ -804,7 +887,7 @@ body {
           <div class="v-arrow">=</div>
           <div class="v-dur-block">
             <div class="v-dur-label">duração</div>
-            <div class="v-dur-val v-man-val"><span id="vol-m-dur-val">60</span><span class="v-dur-unit">min</span></div>
+            <div class="v-dur-val v-man-val"><input type="number" class="v-dur-input" id="vol-m-dur-val" value="60" min="1" max="1440" inputmode="numeric" aria-label="Duração em minutos" oninput="document.getElementById('vol-m-dur-slide').value=this.value;volCalc()"><span class="v-dur-unit">min</span></div>
           </div>
         </div>
       </div>
@@ -814,12 +897,12 @@ body {
             <div class="v-slider-label">Concentração</div>
             <input type="range" class="v-man-range" id="vol-m-conc" min="0.5" max="5" step="0.5" value="2" oninput="volCalc()">
           </div>
-          <div class="v-slider-val v-man-val"><span id="vol-m-conc-v">2.0</span>%</div>
+          <div class="v-slider-val v-man-val"><span id="vol-m-conc-v">2.0</span>% <small id="vol-m-mac"></small></div>
         </div>
         <div class="v-slider-row">
           <div>
             <div class="v-slider-label">FGF (L/min)</div>
-            <input type="range" class="v-man-range" id="vol-m-flow" min="0.5" max="4" step="0.5" value="1.5" oninput="volCalc()">
+            <input type="range" class="v-man-range" id="vol-m-flow" min="0.5" max="4" step="0.1" value="1.5" oninput="volCalc()">
           </div>
           <div class="v-slider-val v-man-val"><span id="vol-m-flow-v">1.5</span> L/min</div>
         </div>
@@ -905,6 +988,9 @@ body {
   <button class="nav-btn" onclick="nav('pcr',this)">
     <span class="icon">🚨</span>PCR
   </button>
+  <button class="nav-btn" onclick="nav('lab',this)">
+    <span class="icon">🩸</span>Lab
+  </button>
   <button class="nav-btn" onclick="nav('vol',this)">
     <span class="icon">💨</span>Volátil
   </button>
@@ -949,11 +1035,10 @@ function calcIBW(h_cm, s) {
 }
 
 function calcLBW(w, h_cm, s) {
-  // James formula
+  // Janmahasatian 2005 (James cai com IMC alto e subdosava obesos)
   if (!w || !h_cm) return 0;
-  const hm = h_cm / 100;
-  if (s === 'F') return Math.max(1.07*w - 148*(w/(hm*100))**2, 20);
-  return Math.max(1.1*w - 128*(w/(hm*100))**2, 20);
+  const imc = w / (h_cm/100)**2;
+  return s === 'F' ? 9270*w / (8780 + 244*imc) : 9270*w / (6680 + 216*imc);
 }
 
 function calcABW(tbw, ibw) {
@@ -965,11 +1050,11 @@ function calcABW(tbw, ibw) {
 
 /* peso por tipo */
 function wByType(type) {
+  const t = weights.tbw;
   switch(type) {
-    case 'IBW': return weights.ibw || weights.tbw;
-    case 'ABW': return weights.abw || weights.ibw || weights.tbw;
-    case 'LBW': return weights.lbw || weights.ibw || weights.tbw;
-    default:    return weights.tbw; // TBW
+    case 'IBW': return Math.min(weights.ibw || t, t);
+    case 'LBW': return Math.min(weights.lbw || weights.ibw || t, t);
+    default:    return t; // TBW
   }
 }
 
@@ -1015,7 +1100,9 @@ function update() {
   renderAL();
   renderVaso();
   renderHid();
+  renderLab();
   renderPCR();
+  if (document.getElementById('tab-vol').classList.contains('active')) volCalc();
 }
 
 function noWeight() {
@@ -1058,20 +1145,12 @@ function renderIOT() {
     }})(),
     (() => { const wt = mk('TBW'); return {
       id:'cet', wtype:'TBW', name:'Cetamina', color:'var(--yellow)',
-      sub:'Dissociativo — broncodilatador, estável HD', conc:'50 mg/ml (amp 2ml)', hasModes:true,
+      sub:'Dissociativo — broncodilatador, estável HD', conc:'50 mg/ml (amp 2ml)', hasModes:false,
       iotRows:[
         {l:'Mín  1 mg/kg', v:`${f(wt*1/50)} ml`, u:`= ${f(wt*1)} mg`},
         {l:'Máx  2 mg/kg', v:`${f(wt*2/50)} ml`, u:`= ${f(wt*2)} mg`},
       ],
-      iotNote:`Pode diluir: 2ml + 8ml SF → 10mg/ml<br>Diluído: 1mg/kg = <strong>${f(wt/10)} ml</strong> | 2mg/kg = <strong>${f(wt*2/10)} ml</strong>`,
-      infTable: infTable_wt(wt, [
-        {d:0.1,eff:'Analgesia mín',conc_mcg_ml:10000,unit:'mg/kg/h'},
-        {d:0.3,eff:'Analgesia mod.',conc_mcg_ml:10000,unit:'mg/kg/h'},
-        {d:0.5,eff:'Analgesia máx',conc_mcg_ml:10000,unit:'mg/kg/h'},
-        {d:1.0,eff:'Sedação leve',conc_mcg_ml:10000,unit:'mg/kg/h'},
-        {d:2.0,eff:'Sedação profunda',conc_mcg_ml:10000,unit:'mg/kg/h'},
-      ], 'mg/kg/h'),
-      infNote:`Diluição: 2ml (100mg) + 8ml SF → <strong>10mg/ml</strong>`,
+      iotNote:`Pode diluir: 2ml + 8ml SF → 10mg/ml<br>Diluído: 1mg/kg = <strong>${f(wt/10)} ml</strong> | 2mg/kg = <strong>${f(wt*2/10)} ml</strong><br>Infusão → aba Sedação`,
       badges:[{t:'Sepse/instabilidade HD',c:'bg'},{t:'Broncoespasmo',c:'bg'},{t:'CI relativa: HIC, HAS',c:'bw'}],
     }})(),
     (() => { const wt = mk('IBW'); return {
@@ -1101,7 +1180,7 @@ function renderIOT() {
       iotRows:[
         {l:'IOT  1 mg/kg', v:`${f(wt*1/10)} ml`, u:`= ${f(wt*1)} mg`},
         {l:'RSI  1,2 mg/kg', v:`${f(wt*1.2/10)} ml`, u:`= ${f(wt*1.2)} mg`},
-        {l:'Sugamadex reversão rápida  16 mg/kg', v:`${f(wt*16/200)} ml`, u:`= ${f(wt*16)} mg (200mg/2ml)`},
+        {l:'Sugamadex reversão rápida  16 mg/kg', v:`${f(wt*16/100)} ml`, u:`= ${f(wt*16)} mg (200mg/2ml)`},
       ],
       iotNote:`Sem diluição | Início: 45-60s | Duração: ~45min`,
       badges:[{t:'Revertível: Sugamadex',c:'bg'},{t:'Duração 45min',c:'bw'}],
@@ -1150,7 +1229,7 @@ function renderSed() {
       id:'prop_inf', wtype:'LBW', name:'Propofol', color:'var(--red)',
       sub:'Hipnótico contínuo — UTI/anestesia', conc:'10 mg/ml (frasco)', hasModes:false,
       iotRows:[],
-      iotNote:`Frasco 10mg/ml | Sem diluição | Faixa: 0,5–4 mg/kg/h<br><strong>⚠️ Síndrome propofol se &gt;5mg/kg/h por &gt;48h</strong>`,
+      iotNote:`Frasco 10mg/ml | Sem diluição | Faixa: 0,5–4 mg/kg/h<br><strong>⚠️ Síndrome propofol se &gt;4mg/kg/h por &gt;48h</strong>`,
       infTable: infTable_wt(wt,[
         {d:0.5,eff:'Sedação leve',conc_mcg_ml:10,unit:'mg/kg/h'},
         {d:1.0,eff:'Sedação mod.',conc_mcg_ml:10,unit:'mg/kg/h'},
@@ -1207,6 +1286,26 @@ function renderSed() {
   el.innerHTML = html;
 }
 
+/* Apfel — risco NVPO (Apfel 1999; consenso Gan 2020) */
+let apfel = { smoker:false, hist:false, opioid:false };
+const APFEL_RISK = [10, 21, 39, 61, 79];
+function apfelCard() {
+  const n = (sex === 'F') + !apfel.smoker + apfel.hist + apfel.opioid;
+  const rec = n === 0 ? 'Sem profilaxia de rotina' : n <= 2 ? '2 antieméticos (ex: dexametasona + ondansetrona)' : '3–4 antieméticos + considerar TIVA';
+  const cb = (k, label) => `<label class="score-row"><input type="checkbox" ${apfel[k]?'checked':''} onchange="apfel.${k}=this.checked;renderAdj()"> ${label}</label>`;
+  return `<div class="drug-card"><div class="drug-header"><div>
+      <div class="drug-name" style="color:var(--teal)">Escore de Apfel</div>
+      <div class="drug-subtitle">Risco de náusea e vômito pós-operatório</div></div>
+      <div class="drug-conc">${n} pts · ${APFEL_RISK[n]}%</div></div>
+    <div class="dose-table">
+      <div class="score-row">${sex==='F'?'☑':'☐'} Sexo feminino <span class="dose-unit">(do painel)</span></div>
+      ${cb('smoker','Fumante (não fumante pontua)')}
+      ${cb('hist','História de NVPO ou cinetose')}
+      ${cb('opioid','Opioide no pós-operatório')}
+    </div>
+    <div class="dilution-note"><strong>${rec}</strong></div></div>`;
+}
+
 /* ════════════════════════════════════════
    Adjuvantes
 ════════════════════════════════════════ */
@@ -1237,7 +1336,7 @@ function renderAdj() {
             {l:'Dose máx  0,07 mg/kg', v:`${f(wt*0.07/0.5,2)} ml`, u:`= ${f(wt*0.07,2)} mg`},
             {l:'Dose máx absoluta', v:'10 ml', u:'= 5 mg'},
           ],
-          iotNote:`<strong>Sempre + Atropina 0,015mg/kg:</strong> ${f(wt*0.015/0.5,2)} ml (0,5mg/ml)<br>Aguardar TOF ≥ 2`,
+          iotNote:`<strong>Sempre + Atropina 0,015mg/kg:</strong> ${f(wt*0.015/0.5,2)} ml (0,5mg/ml)<br>Só com TOF 4 com fadiga (ASA 2023) — TOF &lt;4: preferir Sugamadex`,
           badges:[{t:'Sempre + Atropina',c:'br'},{t:'TOF ≥2',c:'bw'},{t:'Máx 5mg',c:'bw'}],
         }})(),
         (() => { const wt = wByType('IBW'); return {
@@ -1276,7 +1375,7 @@ function renderAdj() {
           id:'tra', wtype:'TBW', name:'Tramadol', color:'var(--accent)',
           sub:'Opioide fraco / misto — analgesia leve-moderada', conc:'50 mg/ml (amp 2ml = 100mg)', hasModes:false,
           iotRows:[
-            {l:'Dose mín  1 mg/kg', v:`${f(wt*1/50,2)} ml`, u:`= ${f(Math.min(wt*1,100),0)} mg`},
+            {l:'Dose mín  1 mg/kg', v:`${f(Math.min(wt*1,100)/50,2)} ml`, u:`= ${f(Math.min(wt*1,100),0)} mg`},
             {l:'Dose máx  2 mg/kg', v:`${f(Math.min(wt*2,100)/50,2)} ml`, u:`= ${f(Math.min(wt*2,100),0)} mg (máx 100mg)`},
           ],
           iotNote:`Amp 50mg/ml (2ml = 100mg) | <strong>Diluir em 100ml SF — infundir em 30min</strong><br>Máximo 400mg/dia | Intervalo 6h`,
@@ -1302,7 +1401,7 @@ function renderAdj() {
           id:'dip', wtype:'TBW', name:'Dipirona (Metamizol)', color:'var(--green)',
           sub:'Analgésico / antiespasmódico / antipirético', conc:'500 mg/ml (amp 2ml = 1g)', hasModes:false,
           iotRows:[
-            {l:'Dose mín  15 mg/kg', v:`${f(wt*15/500,2)} ml`, u:`= ${f(Math.min(wt*15,1000),0)} mg`},
+            {l:'Dose mín  15 mg/kg', v:`${f(Math.min(wt*15,1000)/500,2)} ml`, u:`= ${f(Math.min(wt*15,1000),0)} mg`},
             {l:'Dose máx  20 mg/kg', v:`${f(Math.min(wt*20,1000)/500,2)} ml`, u:`= ${f(Math.min(wt*20,1000),0)} mg`},
             {l:'Dose máx absoluta', v:'2 ml', u:'= 1g por dose'},
           ],
@@ -1337,6 +1436,7 @@ function renderAdj() {
     },
     {
       hdr: 'Antieméticos (Profilaxia NVPO)',
+      pre: apfelCard(),
       drugs: [
         (() => { const wt = wByType('TBW'); return {
           id:'ond', wtype:'TBW', name:'Ondansetrona', color:'var(--teal)',
@@ -1344,7 +1444,7 @@ function renderAdj() {
           iotRows:[
             {l:'Profilaxia adulto', v:'2 ml', u:'= 4 mg IV (ao final cirurgia)'},
             {l:'Tratamento NVPO', v:'2 ml', u:'= 4 mg IV (repetir 8/8h)'},
-            {l:'Dose pediátrica  0,1 mg/kg', v:`${f(wt*0.1/2,2)} ml`, u:`= ${f(Math.min(wt*0.1,4),2)} mg (máx 4mg)`},
+            {l:'Dose pediátrica  0,1 mg/kg', v:`${f(Math.min(wt*0.1,4)/2,2)} ml`, u:`= ${f(Math.min(wt*0.1,4),2)} mg (máx 4mg)`},
           ],
           iotNote:`Amp 2mg/ml | Pode dar sem diluição (lento) ou diluir em 50ml SF<br>
           <strong>Dar 30min antes do fim da cirurgia para profilaxia</strong>`,
@@ -1378,7 +1478,7 @@ function renderAdj() {
             {l:'Dose antiinflamatória  1–5 mg/kg', v:`${f(wt*1/50,1)}–${f(Math.min(wt*5,500)/50,1)} ml`, u:`= ${f(wt*1,0)}–${f(Math.min(wt*5,500),0)} mg (50mg/ml)`},
           ],
           iotNote:`Amp 100mg/2ml (50mg/ml) ou pó 500mg reconstituído em 2ml<br>
-          <strong>Infusão contínua sepse: 200mg em 48ml SF → 50mg/6h = 8ml/h</strong>`,
+          <strong>Infusão contínua sepse: 200mg em 48ml SF (4mg/ml) → 200mg/24h ≈ 2 ml/h</strong>`,
           badges:[{t:'Anafilaxia',c:'br'},{t:'Insuf. adrenal',c:'bg'},{t:'Sepse refratária',c:'bg'},{t:'Hiperglicemia',c:'bw'}],
         }})(),
       ],
@@ -1387,7 +1487,7 @@ function renderAdj() {
 
   let html = '';
   for (const sec of secs) {
-    html += `<div class="sec-hdr">${sec.hdr}</div>`;
+    html += `<div class="sec-hdr">${sec.hdr}</div>` + (sec.pre || '');
     for (const d of sec.drugs) html += buildCard(d);
   }
   el.innerHTML = html;
@@ -1549,8 +1649,9 @@ function renderAL() {
         <strong>SNC:</strong> zumbido, gosto metálico, agitação → convulsão → coma<br>
         <strong>CV:</strong> bradicardia, bloqueio, TV/FV refratária (bupivacaína)<br>
         <strong>Tratamento:</strong> parar injeção · via aérea · ACLS · <strong style="color:var(--yellow)">Intralipid 20%</strong><br>
-        &nbsp;&nbsp;Bolus: <strong>${f(w*1.5/1000,1)} g = ${f(w*1.5/0.2/1000,1)} ml</strong> (1,5ml/kg) EV rápido<br>
-        &nbsp;&nbsp;Infusão: <strong>${f(w*0.25/0.2/1000,1)} ml/min</strong> (0,25ml/kg/min) por 30–60min
+        &nbsp;&nbsp;Bolus: <strong>${w > 70 ? '100 ml' : f(w*1.5,0)+' ml'}</strong> (1,5ml/kg; 100 ml se &gt;70kg) em 2–3min<br>
+        &nbsp;&nbsp;Infusão: <strong>${w > 70 ? '200–250 ml em 15–20min' : f(w*0.25,1)+' ml/min'}</strong> (0,25ml/kg/min)<br>
+        &nbsp;&nbsp;Dose máx: <strong>${f(w*12,0)} ml</strong> (12ml/kg) · ASRA 2020
       </div>
     </div>
   </div>`;
@@ -1626,7 +1727,7 @@ function renderVaso() {
     'Adrenalina (Epinefrina)', 'var(--red)', 'Vasopressor/inotrópico — PCR / anafilaxia',
     60, 'mcg/kg/min',
     [0.05, 0.1, 0.3, 0.5, 1.0, 2.0],
-    `Amp 1mg/ml | <strong>1mg (1ml) + 188ml SF → 60 mcg/ml</strong><br>PCR: 1mg bolus EV a cada 3-5min | Anafilaxia: 0,3mg IM`,
+    `Amp 1mg/ml | <strong>12mg (12ml) + 188ml SF → 60 mcg/ml</strong><br>PCR: 1mg bolus EV a cada 3-5min | Anafilaxia: 0,3mg IM`,
     [{ t:'PCR: 1mg bolus', c:'br' }, { t:'Anafilaxia: 0,3mg IM', c:'bw' }],
     d => d<=0.1?'Baixa':d<=0.5?'Moderada':'Alta'
   );
@@ -1646,7 +1747,7 @@ function renderVaso() {
       <div><div class="drug-name" style="color:var(--yellow)">Tridil (Nitroglicerina)</div><div class="drug-subtitle">Vasodilatador venoso — angina, HAS, ICC</div></div>
       <div class="drug-conc">mcg/min</div>
     </div>
-    <div class="dilution-note">Amp 5mg/ml | <strong>50mg + 200ml SG5% → 0,2mg/ml (200 mcg/ml)</strong><br>
+    <div class="dilution-note">Amp 5mg/ml | <strong>50mg (10ml) + 240ml SG5% → 0,2mg/ml (200 mcg/ml)</strong><br>
     Dose: 5–200 mcg/min | <strong>Dose não é por peso</strong><br>Usar vidro/equipo opaco. Tolerância em 24-48h.</div>
     <div class="dose-table"><table class="inf-table">
       <tr><th>Dose (mcg/min)</th><th>Indicação</th><th>ml/h</th></tr>
@@ -1710,7 +1811,7 @@ function renderPCR() {
     ${row('Dose adulto', '1 mg EV/IO bolus')}
     ${row('Intervalo', 'A cada 3–5 minutos')}
     ${row('Apresentação', 'Amp 1mg/ml (1ml)')}
-    ${w ? row('Pediátrico 0,01 mg/kg', `${f(w*0.01,3)} mg = ${f(w*0.01,3)} ml`) : ''}
+    ${w ? row('Pediátrico 0,01 mg/kg', `${f(w*0.01,3)} mg = ${f(w*0.1,1)} ml de 0,1mg/ml (1ml + 9ml SF)`) : ''}
     ${row('Pós-PCR', '0,1–0,5 mcg/kg/min infusão')}
   </div>`;
 
@@ -1724,7 +1825,7 @@ function renderPCR() {
 
   html += `<div class="pcr-card">
     <div class="pcr-title">🟡 ATROPINA — Bradicardia</div>
-    ${row('Dose', '0,5 mg EV — repetir até 3mg total')}
+    ${row('Dose', '1 mg EV — repetir até 3mg total (AHA 2020)')}
     ${row('Intervalo', '3–5 minutos')}
     ${row('Obs', 'Dose <0,5mg pode causar bradicardia paradoxal')}
   </div>`;
@@ -1748,7 +1849,7 @@ function renderPCR() {
     <div class="pcr-title">🔴 DESFIBRILAÇÃO</div>
     ${row('Bifásico', '120–200 J (conforme fabricante)')}
     ${row('Monofásico', '360 J')}
-    ${w ? row('Pediátrico (4 J/kg)', `${f(w*4,0)} J`) : ''}
+    ${w ? row('Pediátrico (2 J/kg → 4 J/kg)', `1º choque ${f(w*2,0)} J · depois ${f(w*4,0)} J (máx 10 J/kg)`) : ''}
     ${row('RCP pós-choque', 'Retomar imediatamente por 2 min')}
   </div>`;
 
@@ -1760,6 +1861,7 @@ function renderPCR() {
 ════════════════════════════════════════ */
 function buildCard(d) {
   const mode = modes[d.id] || 'iot';
+  if (d.wtype && wByType(d.wtype) === weights.tbw) d.wtype = 'TBW'; // sem altura ou paciente magro → peso real
   const wtColor = wTypeColor[d.wtype] || 'var(--muted)';
 
   let html = `<div class="drug-card">
@@ -1824,9 +1926,11 @@ function infTable_wt(wt, rows, unitLabel) {
    Hidratação Perioperatória
 ════════════════════════════════════════ */
 function renderHid() {
-  const el = document.getElementById('tab-hid');
+  const el = document.getElementById('hid-out');
   const w = W();
-  const jejum = parseFloat(document.getElementById('jejum')?.value) || 0;
+  const jejum = parseFloat(document.getElementById('jejum').value) || 0;
+  const htI = parseFloat(document.getElementById('ht-i').value) || 0;
+  const htF = parseFloat(document.getElementById('ht-f').value) || 0;
 
   // Holliday-Segar: 4-2-1 rule
   function maintenance(kg) {
@@ -1843,27 +1947,7 @@ function renderHid() {
   const h2 = deficit * 0.25 + maint;
   const h3 = deficit * 0.25 + maint;
 
-  let html = `<div class="sec-hdr">Hidratação Perioperatória</div>`;
-
-  html += `<div class="drug-card" style="margin-bottom:14px">
-    <div class="drug-header">
-      <div><div class="drug-name" style="color:var(--accent)">Dados do Paciente</div>
-      <div class="drug-subtitle">Regra 4-2-1 (Holliday-Segar)</div></div>
-    </div>
-    <div class="dose-table">
-      <div class="dose-row">
-        <span class="dose-label">Tempo de jejum</span>
-        <span class="dose-val">
-          <input type="number" id="jejum" inputmode="decimal" placeholder="8" min="0" max="24"
-            value="${jejum||''}"
-            style="width:70px;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;
-                   color:var(--text);font-size:1rem;font-weight:700;padding:5px 8px;outline:none;text-align:right"
-            oninput="renderHid()">
-          <span class="dose-unit"> h</span>
-        </span>
-      </div>
-    </div>
-  </div>`;
+  let html = '';
 
   if (!w) { el.innerHTML = html + noWeight(); return; }
 
@@ -1904,6 +1988,22 @@ function renderHid() {
     </div>`;
   }
 
+  // Perda sanguínea permitida (Gross): VSE × (Hti − Htf) / Ht médio
+  const vse = w * (sex === 'F' ? 65 : 75);
+  const abl = htI > htF && htF > 0 ? vse * (htI - htF) / ((htI + htF) / 2) : 0;
+  html += `<div class="drug-card">
+    <div class="drug-header">
+      <div><div class="drug-name" style="color:var(--red)">Perda Sanguínea Permitida</div>
+      <div class="drug-subtitle">VSE × (Ht inicial − Ht mínimo) / Ht médio</div></div>
+      <div class="drug-conc">${abl ? f(abl,0)+' ml' : 'informe Ht'}</div>
+    </div>
+    <div class="dose-table">
+      <div class="dose-row"><span class="dose-label">Volemia estimada (${sex==='F'?65:75} ml/kg)</span><span class="dose-val">${f(vse,0)}<span class="dose-unit"> ml</span></span></div>
+      ${abl ? `<div class="dose-row"><span class="dose-label">Perda permitida (Ht ${htI}% → ${htF}%)</span><span class="dose-val" style="color:var(--red)">${f(abl,0)}<span class="dose-unit"> ml</span></span></div>` : ''}
+    </div>
+    <div class="dilution-note">Obeso: volemia por kg é menor — o valor superestima a perda permitida.</div>
+  </div>`;
+
   html += `<div class="drug-card">
     <div class="drug-header">
       <div><div class="drug-name" style="color:var(--purple)">Perdas Intraoperatórias</div>
@@ -1927,10 +2027,10 @@ update();
    Voláteis — Consumo de Anestésicos Inalatórios
 ════════════════════════════════════════ */
 const VOL_AGENTS = {
-  sevo: {name:'Sevorane',  d:1.53, pm:200.05},
-  iso:  {name:'Isoflurano',d:1.49, pm:184.5 },
-  des:  {name:'Desflurano',d:1.47, pm:168.04},
-  halo: {name:'Halotano',  d:1.87, pm:197.38},
+  sevo: {name:'Sevorane',  d:1.53, pm:200.05, mac40:1.80},
+  iso:  {name:'Isoflurano',d:1.49, pm:184.5,  mac40:1.17},
+  des:  {name:'Desflurano',d:1.47, pm:168.04, mac40:6.6 },
+  halo: {name:'Halotano',  d:1.87, pm:197.38, mac40:0.75},
 };
 let volCurrentAgent = 'sevo';
 let volChartInst = null;
@@ -1968,7 +2068,7 @@ function volUpdateSliderFill(slider) {
 }
 
 function volGetDur(phase) {
-  return parseInt(document.getElementById('vol-' + phase + '-dur-slide').value);
+  return Math.max(1, parseInt(document.getElementById('vol-' + phase + '-dur-val').value) || 1);
 }
 
 function volUpdateTimeDisplay(phase) {
@@ -1976,7 +2076,6 @@ function volUpdateTimeDisplay(phase) {
   const dur = volGetDur(phase);
   document.getElementById('vol-' + phase + '-display-start').textContent = startEl.value || '—';
   document.getElementById('vol-' + phase + '-end-display').textContent = volAddMinutes(startEl.value, dur);
-  document.getElementById('vol-' + phase + '-dur-val').textContent = dur;
   volUpdateSliderFill(document.getElementById('vol-' + phase + '-dur-slide'));
 }
 
@@ -1994,7 +2093,7 @@ function volBuildChart(sC, sF, sD, mC, mF, mD, factor) {
   const step = Math.max(1, Math.round(totalMin / 40));
   const labels = [], satData = [], manData = [], cumData = [];
   let cum = 0;
-  for (let t = 0; t <= totalMin; t += step) {
+  for (let t = 0; t < totalMin; t += step) {
     labels.push(t + 'm');
     const inSat = t < sD;
     const dS = inSat ? volMlLiq(sC, sF, step, factor) : 0;
@@ -2068,6 +2167,14 @@ function volCalc() {
   document.getElementById('vol-m-conc-v').textContent = mC.toFixed(1);
   document.getElementById('vol-m-flow-v').textContent = mF.toFixed(1);
 
+  // CAM pela idade: MAC40 × 10^(−0,00269 × (idade − 40)); sem idade, assume 40
+  const age = parseFloat(document.getElementById('age').value) || 40;
+  const mac = VOL_AGENTS[volCurrentAgent].mac40 * Math.pow(10, -0.00269 * (age - 40));
+  document.getElementById('vol-age').textContent = age;
+  document.getElementById('vol-mac').textContent = mac.toFixed(2);
+  document.getElementById('vol-s-mac').textContent = '= ' + (sC / mac).toFixed(1) + ' CAM';
+  document.getElementById('vol-m-mac').textContent = '= ' + (mC / mac).toFixed(1) + ' CAM';
+
   const sMl = volMlLiq(sC, sF, sD, factor);
   const mMl = volMlLiq(mC, mF, mD, factor);
   const total = sMl + mMl;
@@ -2080,8 +2187,6 @@ function volCalc() {
   document.getElementById('vol-m-vap').textContent  = ((mC/100)*mF*mD).toFixed(1);
   document.getElementById('vol-m-rate').textContent = ((mMl/mD)*60).toFixed(1);
 
-  const mDurH = Math.floor(mD/60), mDurM = mD%60;
-  document.getElementById('vol-m-dur-val').textContent = mDurH>0 ? mDurH+'h'+(mDurM>0?mDurM+'m':'') : mD;
 
   document.getElementById('vol-tot-all').textContent = total.toFixed(1);
   document.getElementById('vol-tot-sat').textContent = sMl.toFixed(1);
@@ -2091,6 +2196,98 @@ function volCalc() {
   document.getElementById('vol-warn-box').classList.toggle('visible', total>50);
 
   volBuildChart(sC, sF, sD, mC, mF, mD, factor);
+}
+
+/* ════════════════════════════════════════
+   Exames
+════════════════════════════════════════ */
+// [idade máx em dias, Hb média, Hb mín, Ht médio, Ht mín] — Nathan & Oski (Harriet Lane), −2 DP
+const HB_REF = [
+  [0,   16.5, 13.5, 51, 42, 'Cordão'],
+  [3,   18.5, 14.5, 56, 45, '1–3 dias'],
+  [10,  17.5, 13.5, 54, 42, '1 semana'],
+  [21,  16.5, 12.5, 51, 39, '2 semanas'],
+  [45,  14.0, 10.0, 43, 31, '1 mês'],
+  [75,  11.5,  9.0, 35, 28, '2 meses'],
+  [182, 11.5,  9.5, 35, 29, '3–6 meses'],
+  [730, 12.0, 10.5, 36, 33, '6 m – 2 anos'],
+  [2190,12.5, 11.5, 37, 34, '2–6 anos'],
+  [4380,13.5, 11.5, 40, 35, '6–12 anos'],
+];
+function hbRef(days, s) {
+  const r = HB_REF.find(r => days <= r[0]);
+  if (r) return r;
+  if (days < 18*365) return s === 'F' ? [0, 14.0, 12.0, 41, 36, '12–18 anos ♀'] : [0, 14.5, 13.0, 43, 37, '12–18 anos ♂'];
+  return s === 'F' ? [0, 13.5, 12.0, 41, 36, 'Adulto ♀ (OMS)'] : [0, 15.0, 13.0, 45, 39, 'Adulto ♂ (OMS)'];
+}
+
+// CKD-EPI 2021 (Inker, NEJM 2021) — sem coeficiente de raça
+function ckdEpi(cr, age, s) {
+  const k = s === 'F' ? 0.7 : 0.9, a = s === 'F' ? -0.241 : -0.302;
+  return 142 * Math.min(cr/k, 1)**a * Math.max(cr/k, 1)**-1.2 * 0.9938**age * (s === 'F' ? 1.012 : 1);
+}
+const cockcroft = (cr, age, kg, s) => (140 - age) * kg / (72 * cr) * (s === 'F' ? 0.85 : 1);
+
+function renderLab() {
+  const v = id => parseFloat(document.getElementById(id).value) || 0;
+  const line = (l, val, color) => `<div class="dose-row"><span class="dose-label">${l}</span><span class="dose-val"${color ? ` style="color:${color}"` : ''}>${val}</span></div>`;
+  const note = t => `<div class="dilution-note">${t}</div>`;
+  const panelAge = v('age');
+
+  // Hb / Ht
+  const days = v('lab-age') ? v('lab-age') * v('lab-age-u') : panelAge * 365;
+  const hb = v('lab-hb'), ht = v('lab-ht');
+  let o = '';
+  if (days || document.getElementById('lab-age').value === '0') {
+    const [, hbM, hbMin, htM, htMin, faixa] = hbRef(days, sex);
+    o = `<div class="dose-table">${line('Faixa', faixa)}${line('Hb média / mínima', `${hbM} / ${hbMin}<span class="dose-unit"> g/dL</span>`)}${line('Ht médio / mínimo', `${htM} / ${htMin}<span class="dose-unit"> %</span>`)}`;
+    if (hb) o += line('Hb do paciente', hb < hbMin ? `${hb} — baixa` : `${hb} — normal`, hb < hbMin ? 'var(--red)' : 'var(--green)');
+    if (ht) o += line('Ht do paciente', ht < htMin ? `${ht} — baixo` : `${ht} — normal`, ht < htMin ? 'var(--red)' : 'var(--green)');
+    o += '</div>' + note('Sem idade no card, usa a idade do painel. Gestante (OMS): anemia se Hb &lt;11 (1º/3º tri) ou &lt;10,5 (2º tri).');
+  } else o = note('Informe a idade (ou preencha no painel).');
+  document.getElementById('lab-hb-out').innerHTML = o;
+
+  // Filtração glomerular
+  const cr = v('lab-cr');
+  if (!cr) o = note('Informe a creatinina.');
+  else if (panelAge < 18) o = note('Informe idade ≥ 18 anos no painel (fórmulas de adulto).');
+  else {
+    const g = ckdEpi(cr, panelAge, sex);
+    const est = g >= 90 ? 'G1' : g >= 60 ? 'G2' : g >= 45 ? 'G3a' : g >= 30 ? 'G3b' : g >= 15 ? 'G4' : 'G5';
+    o = `<div class="dose-table">${line('CKD-EPI 2021', `${f(g,0)}<span class="dose-unit"> mL/min/1,73m² · ${est}</span>`, g < 60 ? 'var(--orange)' : '')}`;
+    const w = W(), ibw = weights.ibw;
+    if (w) {
+      o += line('Cockcroft-Gault (peso real)', `${f(cockcroft(cr, panelAge, w, sex),0)}<span class="dose-unit"> mL/min</span>`);
+      if (ibw && w > ibw * 1.2) o += line('Cockcroft-Gault (peso ajustado)', `${f(cockcroft(cr, panelAge, weights.abw, sex),0)}<span class="dose-unit"> mL/min</span>`);
+    }
+    o += '</div>' + note('Ajuste de dose de drogas: bulas usam Cockcroft-Gault. Obeso: preferir peso ajustado.');
+  }
+  document.getElementById('lab-cr-out').innerHTML = o;
+
+  // HOMA
+  const gli = v('lab-gli'), ins = v('lab-ins');
+  if (gli && ins) {
+    const ir = gli * ins / 405, beta = gli > 63 ? 360 * ins / (gli - 63) : 0;
+    o = `<div class="dose-table">${line('HOMA-IR', f(ir,2), ir > 2.7 ? 'var(--orange)' : 'var(--green)')}${line('HOMA-β', beta ? `${f(beta,0)}<span class="dose-unit"> %</span>` : '—')}</div>`
+      + note('HOMA-IR &gt;2,7 sugere resistência insulínica (corte BRAMS, adulto brasileiro; varia por população e laboratório).');
+  } else o = note('Informe glicemia e insulina de jejum.');
+  document.getElementById('lab-homa-out').innerHTML = o;
+}
+
+/* autoteste: abrir com ?teste e olhar o console */
+if (location.search.includes('teste')) {
+  document.getElementById('weight').value = 70; document.getElementById('height').value = 170; setSex('M');
+  const t = id => document.getElementById(id).textContent, ok = (c, m) => console.assert(c, 'FALHOU: ' + m);
+  ok(t('tab-al').includes('Bolus: 105 ml'), 'Intralipid 70kg = 105 ml');
+  ok(t('tab-iot').includes(f(wByType('IBW')*16/100) + ' ml= ' + f(wByType('IBW')*16) + ' mg'), 'Sugamadex 16mg/kg em 100mg/ml');
+  ok(t('tab-sed').includes('1Sedação leve7') && t('tab-iot').includes('Infusão → aba Sedação'), 'Cetamina 1mg/kg/h = 7 ml/h só na aba Sedação');
+  ok(calcLBW(170, 160, 'F') > calcLBW(120, 160, 'F'), 'LBW cresce com o peso');
+  ok(wByType('IBW') <= 70 && wByType('LBW') <= 70, 'nunca acima do peso real');
+  weights.tbw = 45; ok(wByType('IBW') === 45, 'magro usa peso real'); update();
+  ok(Math.round(ckdEpi(1.0, 50, 'M')) === 92, 'CKD-EPI 2021: 50a ♂ Cr 1,0 = 92');
+  ok(Math.round(cockcroft(1.0, 40, 70, 'M')) === 97, 'Cockcroft-Gault: 40a ♂ 70kg Cr 1,0 = 97');
+  ok(hbRef(60, 'M')[2] === 9.0 && hbRef(30*365, 'F')[2] === 12.0, 'Hb mínima: 2 meses 9,0 · adulta 12,0');
+  console.log('autoteste concluído');
 }
 
 if ('serviceWorker' in navigator) {
