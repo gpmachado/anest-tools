@@ -254,17 +254,13 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
-  display: flex;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   z-index: 100;
 }
-.bottom-nav::-webkit-scrollbar { display: none; }
 .nav-btn {
-  flex: 1 1 0;
   min-width: 0;
-  padding: 10px 1px 8px;
+  padding: 7px 1px 5px;
   white-space: nowrap;
   background: none;
   border: none;
@@ -286,7 +282,7 @@ body {
 /* ── CONTENT ── */
 .content {
   padding: 16px 14px;
-  padding-bottom: calc(72px + var(--safe-bottom) + 16px);
+  padding-bottom: calc(116px + var(--safe-bottom) + 16px);
   max-width: 640px;
   margin: 0 auto;
 }
@@ -703,6 +699,26 @@ body {
   font-size: 0.8rem; color: var(--yellow); background: rgba(244,196,48,0.08);
   border: 1px solid rgba(244,196,48,0.25); border-radius: 10px; padding: 9px 12px; margin-bottom: 12px;
 }
+/* ── Escalas (js/scales.js) ── */
+#tab-esc .sc { background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+#tab-esc .sc summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; cursor: pointer; }
+#tab-esc .sc summary::-webkit-details-marker { display: none; }
+#tab-esc .sc-name { display: flex; flex-direction: column; min-width: 0; }
+#tab-esc .sc-name b { font-size: 0.92rem; }
+#tab-esc .sc-name small { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+#tab-esc .sc-badge { font-size: 0.7rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+#tab-esc .sc-body { padding: 0 14px 14px; }
+#tab-esc .sc-res { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); font-size: 0.8rem; line-height: 1.5; }
+#tab-esc .sc-res b { display: block; color: var(--accent); font-size: 0.9rem; margin-bottom: 3px; }
+#tab-esc .sc-src { font-size: 0.66rem; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+#tab-esc .sc-warn { font-size: 0.74rem; margin-top: 6px; color: var(--orange); line-height: 1.5; }
+#tab-esc .sc-field { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; font-size: 0.82rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+#tab-esc .sc-field-wide { flex-direction: column; align-items: stretch; gap: 6px; }
+#tab-esc .sc-sel { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; font-size: 0.8rem; max-width: 100%; min-width: 0; }
+#tab-esc .sc-grp { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-top: 12px; }
+#tab-esc .sc-auto { opacity: 0.75; }
+#tab-esc .sc-foot { font-size: 11px; color: var(--muted); text-align: center; padding: 6px 0 14px; line-height: 1.6; }
+
 /* ── Mistura de soluções (js/mix.js) ── */
 #tab-hid .mix-res { margin: 0 14px 12px; }
 #tab-hid .mix-line { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; color: var(--muted); }
@@ -777,6 +793,7 @@ body {
   <div class="tab-pane" id="tab-adj"></div>
   <div class="tab-pane" id="tab-vaso"></div>
   <div class="tab-pane" id="tab-inf"></div>
+  <div class="tab-pane" id="tab-esc"></div>
   <div class="tab-pane" id="tab-al"></div>
   <div class="tab-pane" id="tab-hid">
     <div class="sec-hdr">Hidratação Perioperatória</div>
@@ -1054,6 +1071,9 @@ body {
   <button class="nav-btn" onclick="nav('hid',this)">
     <span class="icon">💧</span>Hidrat.
   </button>
+  <button class="nav-btn" onclick="nav('esc',this)">
+    <span class="icon">📋</span>Escalas
+  </button>
   <button class="nav-btn" onclick="nav('pcr',this)">
     <span class="icon">🚨</span>PCR
   </button>
@@ -1067,6 +1087,7 @@ body {
 
 <script src="js/infusion.js"></script>
 <script src="js/mix.js"></script>
+<script src="js/scales.js"></script>
 <script>
 /* ── utils ── */
 const W   = () => parseFloat(document.getElementById('weight').value) || 0;
@@ -1174,6 +1195,7 @@ function update() {
   renderLab();
   renderPCR();
   if (typeof renderInfusion === 'function') renderInfusion();
+  if (typeof renderScales === 'function') renderScales();
   if (document.getElementById('tab-vol').classList.contains('active')) volCalc();
 }
 
@@ -1358,26 +1380,6 @@ function renderSed() {
   el.innerHTML = html;
 }
 
-/* Apfel — risco NVPO (Apfel 1999; consenso Gan 2020) */
-let apfel = { smoker:false, hist:false, opioid:false };
-const APFEL_RISK = [10, 21, 39, 61, 79];
-function apfelCard() {
-  const n = (sex === 'F') + !apfel.smoker + apfel.hist + apfel.opioid;
-  const rec = n === 0 ? 'Sem profilaxia de rotina' : n <= 2 ? '2 antieméticos (ex: dexametasona + ondansetrona)' : '3–4 antieméticos + considerar TIVA';
-  const cb = (k, label) => `<label class="score-row"><input type="checkbox" ${apfel[k]?'checked':''} onchange="apfel.${k}=this.checked;renderAdj()"> ${label}</label>`;
-  return `<div class="drug-card"><div class="drug-header"><div>
-      <div class="drug-name" style="color:var(--teal)">Escore de Apfel</div>
-      <div class="drug-subtitle">Risco de náusea e vômito pós-operatório</div></div>
-      <div class="drug-conc">${n} pts · ${APFEL_RISK[n]}%</div></div>
-    <div class="dose-table">
-      <div class="score-row">${sex==='F'?'☑':'☐'} Sexo feminino <span class="dose-unit">(do painel)</span></div>
-      ${cb('smoker','Fumante (não fumante pontua)')}
-      ${cb('hist','História de NVPO ou cinetose')}
-      ${cb('opioid','Opioide no pós-operatório')}
-    </div>
-    <div class="dilution-note"><strong>${rec}</strong></div></div>`;
-}
-
 /* ════════════════════════════════════════
    Adjuvantes
 ════════════════════════════════════════ */
@@ -1508,7 +1510,7 @@ function renderAdj() {
     },
     {
       hdr: 'Antieméticos (Profilaxia NVPO)',
-      pre: apfelCard(),
+      pre: `<div class="dilution-note">Risco de NVPO (escore de Apfel): ver aba <a href="#" onclick="nav('esc',document.querySelector('.nav-btn[onclick*=&quot;esc&quot;]'));return false" style="color:var(--accent)">Escalas</a>.</div>`,
       drugs: [
         (() => { const wt = wByType('TBW'); return {
           id:'ond', wtype:'TBW', name:'Ondansetrona', color:'var(--teal)',
