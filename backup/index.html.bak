@@ -647,6 +647,63 @@ body {
   border-top: 1px solid var(--border); margin-top: 4px;
   padding: 14px 0 4px; line-height: 1.7;
 }
+
+/* ── Infusão (js/infusion.js) ── */
+#tab-inf .inf-pad { padding: 14px 16px 16px; }
+#tab-inf .inf-label {
+  font-size: 0.68rem; font-weight: 600; letter-spacing: 0.6px;
+  text-transform: uppercase; color: var(--muted); margin: 12px 0 5px;
+}
+#tab-inf .inf-pad > .inf-label:first-child { margin-top: 0; }
+#tab-inf .inf-row { display: flex; align-items: center; gap: 8px; }
+#tab-inf .inf-sep { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+#tab-inf .inf-in, #tab-inf .inf-sel {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+  color: var(--text); font-size: 1rem; font-weight: 700; padding: 9px 10px;
+  outline: none; min-width: 0; -webkit-appearance: none; appearance: none;
+}
+#tab-inf .inf-in { flex: 1; text-align: right; width: 100%; }
+#tab-inf .inf-sel { flex: 0 0 auto; text-align: center; }
+#tab-inf .inf-wide { width: 100%; display: block; }
+#tab-inf .inf-big { font-size: 1.3rem; padding: 12px 14px; }
+#tab-inf .inf-in:focus, #tab-inf .inf-sel:focus { border-color: var(--accent); }
+#tab-inf .inf-conc {
+  margin-top: 10px; font-size: 0.78rem; color: var(--muted); font-weight: 600;
+  background: rgba(255,255,255,0.03); border-radius: 8px; padding: 7px 10px;
+}
+#tab-inf .inf-seg {
+  display: flex; background: rgba(255,255,255,0.05); border-radius: 8px;
+  padding: 3px; gap: 3px; margin-bottom: 4px;
+}
+#tab-inf .inf-chip {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+  color: var(--muted); font-size: 0.95rem; font-weight: 700; padding: 9px 12px; cursor: pointer;
+}
+#tab-inf .inf-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+#tab-inf .inf-hint { font-size: 0.7rem; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+#tab-inf .inf-hint a { color: var(--accent); }
+#tab-inf .inf-manage { margin-top: 12px; }
+#tab-inf .inf-manage summary { font-size: 0.75rem; color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 0; }
+#tab-inf .inf-btnrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#tab-inf .inf-btnrow button {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 0.75rem; font-weight: 600; padding: 7px 10px; cursor: pointer;
+}
+#tab-inf .inf-btnrow button:disabled { opacity: 0.4; cursor: default; }
+#tab-inf .inf-result { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; color: var(--accent); }
+#tab-inf .inf-result span { font-size: 0.9rem; font-weight: 600; color: var(--muted); }
+#tab-inf .inf-eq { font-size: 0.76rem; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+#tab-inf .inf-eq b { color: var(--text); }
+#tab-inf .inf-warn {
+  margin-top: 10px; font-size: 0.8rem; font-weight: 700; color: var(--red);
+  background: rgba(224,80,80,0.1); border: 1px solid rgba(224,80,80,0.3);
+  border-radius: 10px; padding: 9px 12px;
+}
+#tab-inf .inf-msg {
+  font-size: 0.8rem; color: var(--yellow); background: rgba(244,196,48,0.08);
+  border: 1px solid rgba(244,196,48,0.25); border-radius: 10px; padding: 9px 12px; margin-bottom: 12px;
+}
+#tab-inf .inf-foot { font-size: 11px; color: var(--muted); text-align: center; padding: 6px 0 14px; line-height: 1.6; }
 </style>
 </head>
 <body>
@@ -712,6 +769,7 @@ body {
   <div class="tab-pane" id="tab-sed"></div>
   <div class="tab-pane" id="tab-adj"></div>
   <div class="tab-pane" id="tab-vaso"></div>
+  <div class="tab-pane" id="tab-inf"></div>
   <div class="tab-pane" id="tab-al"></div>
   <div class="tab-pane" id="tab-hid">
     <div class="sec-hdr">Hidratação Perioperatória</div>
@@ -982,6 +1040,9 @@ body {
   <button class="nav-btn" onclick="nav('vaso',this)">
     <span class="icon">💓</span>Vasoat.
   </button>
+  <button class="nav-btn" onclick="nav('inf',this)">
+    <span class="icon">⏱️</span>Infusão
+  </button>
   <button class="nav-btn" onclick="nav('hid',this)">
     <span class="icon">💧</span>Hidrat.
   </button>
@@ -996,6 +1057,7 @@ body {
   </button>
 </nav>
 
+<script src="js/infusion.js"></script>
 <script>
 /* ── utils ── */
 const W   = () => parseFloat(document.getElementById('weight').value) || 0;
@@ -1102,6 +1164,7 @@ function update() {
   renderHid();
   renderLab();
   renderPCR();
+  if (typeof renderInfusion === 'function') renderInfusion();
   if (document.getElementById('tab-vol').classList.contains('active')) volCalc();
 }
 

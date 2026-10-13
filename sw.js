@@ -2,11 +2,12 @@
 //     Exemplo: se o repo for github.com/seunome/drugcalc → '/drugcalc/'
 const REPO = '/anest-tools/';
 
-const CACHE = 'anest-tools-v4';
+const CACHE = 'anest-tools-v5';
 const ASSETS = [
   REPO,
   REPO + 'index.html',
   REPO + 'js/infusion.js',
+  REPO + 'js/mix.js',
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
 ];
 
