@@ -815,6 +815,7 @@ body {
     <div id="mix-root"></div>
   </div>
   <div class="tab-pane" id="tab-pcr"></div>
+  <div class="tab-pane" id="tab-ped"></div>
   <div class="tab-pane" id="tab-lab">
     <div class="sec-hdr">Exames — Hemograma por idade</div>
     <div class="drug-card">
@@ -1079,6 +1080,9 @@ body {
   <button class="nav-btn" onclick="nav('pcr',this)">
     <span class="icon">🚨</span>PCR
   </button>
+  <button class="nav-btn" onclick="nav('ped',this)">
+    <span class="icon">👶</span>Ped
+  </button>
   <button class="nav-btn" onclick="nav('lab',this)">
     <span class="icon">🩸</span>Lab
   </button>
@@ -1091,6 +1095,7 @@ body {
 <script src="js/mix.js"></script>
 <script src="js/scales.js"></script>
 <script src="js/bolus.js"></script>
+<script src="js/peds.js"></script>
 <script>
 /* ── utils ── */
 const W   = () => parseFloat(document.getElementById('weight').value) || 0;
@@ -2422,6 +2427,12 @@ if (location.search.includes('teste')) {
   ok(!BolusCalc.bolus(100, 2, 10, 150).ok, 'Bolus: dose maior que o preparado dá erro');
   ok(ScalesCalc.egri({ mouth: 1, tmd: 2, mall: 1, neck: 0, prog: 0, weight: 0, hist: 0 }).difficult, 'EGRI 4 = laringoscopia difícil');
   ok(!ScalesCalc.egri({ mouth: 1, tmd: 1, mall: 1 }).difficult, 'EGRI 3 = não');
+  const P = PedsCalc;
+  ok(P.estWeight(6).kg === 7 && P.estWeight(36).kg === 14 && P.estWeight(96).kg === 31 && P.estWeight(13 * 12) === null, 'Peso estimado APLS: 6m 7kg · 3a 14kg · 8a 31kg · 13a pesar');
+  ok(P.tube(48, 16).cuffed === '4,5' && P.tube(48, 16).uncuffed === '5,0', 'Tubo 4 anos: com cuff 4,5 · sem cuff 5,0');
+  ok(P.dose(0.01, 20, 1) === 0.2 && P.dose(5, 70, 300) === 300, 'Adrenalina 20kg 0,2mg · amiodarona com teto 300mg');
+  ok(P.vitals(60).sbpMin === 80 && P.vitals(0.5).sbpMin === 60, 'Hipotensão: 5 anos <80 · neonato <60');
+  ok(P.maintenance(15) === 50 && P.lma(12) === '2', 'Ped: manutenção 15kg 50 mL/h · ML nº 2');
   console.log('autoteste concluído');
 }
 
