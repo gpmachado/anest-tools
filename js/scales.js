@@ -2,11 +2,11 @@
  * @file Risk scales and scores for the "Escalas" tab.
  *
  * Pre-operative: Apfel (PONV), STOP-Bang (obstructive sleep apnea),
- * RCRI/Lee (cardiac risk), Caprini 2005 (VTE).
+ * RCRI/Lee (cardiac risk), Caprini 2005 (VTE), El-Ganzouri and LEMON (airway).
  * Post-operative / ICU: modified Aldrete (PACU), ROX index (high-flow nasal cannula).
  *
  * Two layers:
- *  - a pure calculation layer (no DOM), exposed as `ScalesCalc`, covered by Node tests;
+ *  - a pure calculation layer (no DOM), exposed as `ScalesCalc` (checked by the ?teste self-test in index.html);
  *  - a UI layer that renders accordions into `#tab-esc`.
  *
  * Privacy: selections are kept in memory only. Nothing about the patient is
@@ -250,7 +250,64 @@
     return { points, level: 'high', label: 'Alto', advice: 'Heparina (HNF ou HBPM), com ou sem compressão mecânica' };
   }
 
+  /**
+   * El-Ganzouri risk index (EGRI) items and options (El-Ganzouri et al., Anesth Analg 1996).
+   * Body weight is item `weight` and is read from the patient panel when available.
+   * @type {Array<{key: string, label: string, options: Array<{pts: number, text: string}>}>}
+   */
+  const EGRI_PARAMS = [
+    { key: 'mouth', label: 'Abertura de boca', options: [{ pts: 0, text: '≥ 4 cm' }, { pts: 1, text: '< 4 cm' }] },
+    { key: 'tmd', label: 'Distância tireomentoniana', options: [{ pts: 0, text: '> 6,5 cm' }, { pts: 1, text: '6,0–6,5 cm' }, { pts: 2, text: '< 6,0 cm' }] },
+    { key: 'mall', label: 'Mallampati', options: [{ pts: 0, text: 'I' }, { pts: 1, text: 'II' }, { pts: 2, text: 'III ou IV' }] },
+    { key: 'neck', label: 'Mobilidade cervical', options: [{ pts: 0, text: '> 90°' }, { pts: 1, text: '80–90°' }, { pts: 2, text: '< 80°' }] },
+    { key: 'prog', label: 'Protrusão da mandíbula', options: [{ pts: 0, text: 'Consegue' }, { pts: 1, text: 'Não consegue' }] },
+    { key: 'weight', label: 'Peso', options: [{ pts: 0, text: '< 90 kg' }, { pts: 1, text: '90–110 kg' }, { pts: 2, text: '> 110 kg' }] },
+    { key: 'hist', label: 'História de intubação difícil', options: [{ pts: 0, text: 'Nenhuma' }, { pts: 1, text: 'Duvidosa' }, { pts: 2, text: 'Definida' }] },
+  ];
+
+  /**
+   * Maps body weight (kg) to EGRI points.
+   * @param {number} kg Weight.
+   * @returns {number} 0, 1 or 2.
+   */
+  function egriWeightPts(kg) {
+    return kg > 110 ? 2 : kg >= 90 ? 1 : 0;
+  }
+
+  /**
+   * Computes the EGRI. Score ≥ 4 predicts difficult laryngoscopy (Cormack-Lehane III–IV).
+   * @param {Object<string, number|null>} values Points chosen per item key (null/undefined = unanswered).
+   * @returns {{points: number, answered: number, total: number, complete: boolean, difficult: boolean}}
+   */
+  function egri(values) {
+    let points = 0;
+    let answered = 0;
+    EGRI_PARAMS.forEach((p) => {
+      const v = values[p.key];
+      if (typeof v === 'number') { points += v; answered++; }
+    });
+    return { points, answered, total: EGRI_PARAMS.length, complete: answered === EGRI_PARAMS.length, difficult: points >= 4 };
+  }
+
+  /**
+   * LEMON items (Reed et al., Emerg Med J 2005), 1 point each, 0–10.
+   * @type {Array<{key: string, group: string, label: string}>}
+   */
+  const LEMON_ITEMS = [
+    { key: 'trauma', group: 'L — Olhar', label: 'Trauma facial' },
+    { key: 'incisors', group: 'L — Olhar', label: 'Incisivos grandes' },
+    { key: 'beard', group: 'L — Olhar', label: 'Barba ou bigode' },
+    { key: 'tongue', group: 'L — Olhar', label: 'Língua grande' },
+    { key: 'e1', group: 'E — Regra 3-3-2', label: 'Abertura entre incisivos < 3 dedos' },
+    { key: 'e2', group: 'E — Regra 3-3-2', label: 'Hioide–mento < 3 dedos' },
+    { key: 'e3', group: 'E — Regra 3-3-2', label: 'Tireoide–assoalho da boca < 2 dedos' },
+    { key: 'mall', group: 'M — Mallampati', label: 'Mallampati ≥ III' },
+    { key: 'obst', group: 'O — Obstrução', label: 'Obstrução da via aérea (epiglotite, abscesso, tumor, trauma)' },
+    { key: 'neckmob', group: 'N — Pescoço', label: 'Mobilidade cervical reduzida' },
+  ];
+
   root.ScalesCalc = {
+    EGRI_PARAMS, LEMON_ITEMS, egri, egriWeightPts,
     APFEL_RISK, RCRI_RISK, ROX_FAIL, ROX_SUCCESS, ALDRETE_PARAMS,
     CAPRINI_ITEMS, CAPRINI_SURGERY, CAPRINI_MOBILITY, CAPRINI_AGE,
     apfel, stopBang, rcri, aldrete, rox, roxInterpret, caprini, capriniAgeGroup,
@@ -272,6 +329,8 @@
     rcri: { surgery: false, ihd: false, chf: false, cva: false, insulin: false, creat: false },
     caprini: { age: '', surgery: '', mobility: '', flags: {} },
     aldrete: {},
+    egri: {},
+    lemon: {},
   };
 
   /**
@@ -440,6 +499,46 @@
       return { body, badge: badge(cls, `${r.points} pt · ${r.label}`) };
     },
 
+    egri() {
+      const kg = (() => { const el = document.getElementById('weight'); const n = el ? parseFloat(el.value) : NaN; return n > 0 ? n : null; })();
+      const values = Object.assign({}, state.egri);
+      if (kg !== null) values.weight = egriWeightPts(kg);
+      const r = egri(values);
+      const rows = EGRI_PARAMS.map((p) => {
+        if (p.key === 'weight' && kg !== null) {
+          const o = p.options.find((x) => x.pts === values.weight);
+          return `<div class="score-row sc-auto"><span>Peso</span> <span>${o.text} (${o.pts}) <span class="dose-unit">(do painel)</span></span></div>`;
+        }
+        const cur = state.egri[p.key];
+        const opts = [{ value: '', text: 'Selecione…' }].concat(p.options.map((o) => ({ value: String(o.pts), text: `${o.text} (${o.pts})` })));
+        return `<div class="sc-field sc-field-wide"><span>${p.label}</span>${select('egri', p.key, typeof cur === 'number' ? String(cur) : '', opts)}</div>`;
+      }).join('');
+      const status = r.complete ? `${r.points}/12` : `${r.points}/12 (faltam ${r.total - r.answered})`;
+      const verdict = r.difficult
+        ? 'EGRI ≥ 4: preditor de laringoscopia difícil (Cormack III–IV). Planeje via aérea difícil.'
+        : r.complete ? 'EGRI < 4: baixo risco previsto de laringoscopia difícil.' : 'Preencha os 7 itens.';
+      const body = `${rows}
+        <div class="sc-res"><b>${status}</b><div>${verdict}</div>
+        <div class="sc-src">El-Ganzouri 1996. Nenhum escore exclui via aérea difícil: tenha sempre o plano B.</div></div>`;
+      return { body, badge: badge(r.difficult ? 'br' : r.complete ? 'bg' : 'bi', status) };
+    },
+
+    lemon() {
+      let last = '';
+      let points = 0;
+      const rows = LEMON_ITEMS.map((it) => {
+        if (state.lemon[it.key]) points++;
+        const hdr = it.group !== last ? `<div class="sc-grp">${it.group}</div>` : '';
+        last = it.group;
+        return hdr + cb('lemon', it.key, it.label, !!state.lemon[it.key]);
+      }).join('');
+      const body = `${rows}
+        <div class="sc-res"><b>${points}/10${points ? ' — preditor(es) de intubação difícil' : ''}</b>
+        <div>Sem ponto de corte validado: cada item positivo aumenta o risco.</div>
+        <div class="sc-src">LEMON (Reed 2005). Pensado para emergência; use junto com o EGRI no pré-anestésico.</div></div>`;
+      return { body, badge: badge(points >= 2 ? 'br' : points === 1 ? 'bw' : 'bg', `${points}/10`) };
+    },
+
     aldrete() {
       const a = aldrete(state.aldrete);
       const rows = ALDRETE_PARAMS.map((p) => {
@@ -463,6 +562,10 @@
       { id: 'stop', title: 'STOP-Bang', subtitle: 'Apneia obstrutiva do sono' },
       { id: 'rcri', title: 'RCRI (Lee)', subtitle: 'Risco cardíaco perioperatório' },
       { id: 'caprini', title: 'Caprini', subtitle: 'Risco de TEV e profilaxia' },
+    ] },
+    { header: 'Via aérea', scales: [
+      { id: 'egri', title: 'El-Ganzouri (EGRI)', subtitle: 'Previsão de laringoscopia difícil' },
+      { id: 'lemon', title: 'LEMON', subtitle: 'Previsão de intubação difícil' },
     ] },
     { header: 'Pós-operatório e UTI', scales: [
       { id: 'aldrete', title: 'Aldrete modificado', subtitle: 'Recuperação na SRPA' },
@@ -543,7 +646,7 @@
    * @returns {void}
    */
   function renderAll() {
-    ['apfel', 'stop', 'rcri', 'caprini', 'aldrete'].forEach((id) => {
+    ['apfel', 'stop', 'rcri', 'caprini', 'egri', 'lemon', 'aldrete'].forEach((id) => {
       const r = renderers[id]();
       document.getElementById(`sc-${id}-body`).innerHTML = r.body;
       document.getElementById(`sc-${id}-badge`).innerHTML = r.badge;
@@ -564,8 +667,8 @@
         if (el.type === 'checkbox') {
           if (sc === 'caprini') state.caprini.flags[k] = el.checked;
           else state[sc][k] = el.checked;
-        } else if (sc === 'aldrete') {
-          state.aldrete[k] = el.value === '' ? null : parseInt(el.value, 10);
+        } else if (sc === 'aldrete' || sc === 'egri') {
+          state[sc][k] = el.value === '' ? null : parseInt(el.value, 10);
         } else {
           state[sc][k] = el.value;
         }

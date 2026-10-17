@@ -744,6 +744,8 @@ body {
   <p>Calculadora de doses para anestesia, UTI e urgência.</p>
   <p>Desenvolvido por <a href="https://github.com/gpmachado" target="_blank" rel="noopener">@gpmachado</a> no GitHub.</p>
   <p class="about-note">Uso exclusivo por médico habilitado. Valores de referência — confira sempre com o protocolo institucional.</p>
+  <p class="about-note">Versão instalada: <span id="app-ver">—</span></p>
+  <button type="button" id="upd-btn" onclick="checkUpdate(this)" style="margin-bottom:8px;background:var(--surface);color:var(--accent);border:1.5px solid var(--accent)">Procurar atualização</button>
   <form method="dialog"><button>Fechar</button></form>
 </dialog>
 
@@ -792,9 +794,9 @@ body {
   <div class="tab-pane" id="tab-sed"></div>
   <div class="tab-pane" id="tab-adj"></div>
   <div class="tab-pane" id="tab-vaso"></div>
-  <div class="tab-pane" id="tab-inf"></div>
+  <div class="tab-pane" id="tab-inf"><div id="inf-root"></div><div id="bolus-root"></div></div>
   <div class="tab-pane" id="tab-esc"></div>
-  <div class="tab-pane" id="tab-al"></div>
+  <div class="tab-pane" id="tab-al"><div id="al-out"></div><div id="almix-root"></div></div>
   <div class="tab-pane" id="tab-hid">
     <div class="sec-hdr">Hidratação Perioperatória</div>
     <div class="drug-card" style="margin-bottom:14px">
@@ -1088,6 +1090,7 @@ body {
 <script src="js/infusion.js"></script>
 <script src="js/mix.js"></script>
 <script src="js/scales.js"></script>
+<script src="js/bolus.js"></script>
 <script>
 /* ── utils ── */
 const W   = () => parseFloat(document.getElementById('weight').value) || 0;
@@ -1190,12 +1193,14 @@ function update() {
   renderSed();
   renderAdj();
   renderAL();
+  renderALMix();
   renderVaso();
   renderHid();
   renderLab();
   renderPCR();
   if (typeof renderInfusion === 'function') renderInfusion();
   if (typeof renderScales === 'function') renderScales();
+  if (typeof renderBolus === 'function') renderBolus();
   if (document.getElementById('tab-vol').classList.contains('active')) volCalc();
 }
 
@@ -1576,8 +1581,61 @@ function renderAdj() {
 /* ════════════════════════════════════════
    Anestésicos Locais
 ════════════════════════════════════════ */
+/* Doses máximas de anestésico local — usadas nos cards e na soma de misturas */
+const LA_MAX = {
+  lido: { name: 'Lidocaína', doses: [
+    { label: 'Sem vasoconstritor', doseKg: 4.5, absMax: 300, vaso: false },
+    { label: 'Com vasoconstritor (epi 1:200.000)', doseKg: 7, absMax: 500, vaso: true },
+  ] },
+  bupi: { name: 'Bupivacaína', doses: [
+    { label: 'Sem vasoconstritor', doseKg: 2, absMax: 150, vaso: false },
+    { label: 'Com vasoconstritor (epi 1:200.000)', doseKg: 2.5, absMax: 200, vaso: true },
+  ] },
+  levo: { name: 'Levobupivacaína', doses: [{ label: 'Dose máxima', doseKg: 2, absMax: 150, vaso: false }] },
+  ropi: { name: 'Ropivacaína', doses: [{ label: 'Dose máxima', doseKg: 3, absMax: 250, vaso: false }] },
+};
+const laMaxMg = (key, vaso, w) => { const ds = LA_MAX[key].doses, d = ds.find(x => x.vaso === vaso) || ds[0]; return Math.min(d.doseKg * w, d.absMax); };
+
+/* Soma de anestésicos locais: toxicidade considerada aditiva (Σ mg / dose máx de cada um) */
+function laMix(items, w) {
+  let total = 0;
+  const rows = items.filter(i => i.pct > 0 && i.ml > 0).map(i => {
+    const mg = i.pct * 10 * i.ml, max = laMaxMg(i.key, i.vaso, w), frac = mg / max;
+    total += frac;
+    return { ...i, mg, max, frac };
+  });
+  return { rows, total };
+}
+
+function renderALMix() {
+  const host = document.getElementById('almix-root');
+  if (!host.firstChild) {
+    const row = k => `<div class="dose-row" style="flex-wrap:wrap;gap:6px"><span class="dose-label" style="min-width:110px">${LA_MAX[k].name}</span><span class="dose-val">
+      <input type="number" id="lam-${k}-pct" class="hid-input" style="width:58px" inputmode="decimal" placeholder="%" min="0" step="any"><span class="dose-unit">% </span>
+      <input type="number" id="lam-${k}-ml" class="hid-input" style="width:58px" inputmode="decimal" placeholder="ml" min="0" step="any"><span class="dose-unit">ml</span>
+      ${LA_MAX[k].doses.length > 1 ? `<label class="dose-unit" style="margin-left:6px"><input type="checkbox" id="lam-${k}-vaso"> epi</label>` : ''}</span></div>`;
+    host.innerHTML = `<div class="sec-hdr">Soma de anestésicos locais (mistura)</div>
+      <div class="drug-card"><div class="drug-header"><div><div class="drug-name" style="color:var(--red)">Fração da dose máxima</div>
+      <div class="drug-subtitle">Concentração (%) e volume (ml) de cada um usado</div></div></div>
+      <div class="dose-table">${Object.keys(LA_MAX).map(row).join('')}</div>
+      <div id="lam-out"></div>
+      <div class="dilution-note">Toxicidade considerada <strong>aditiva</strong>: soma das frações da dose máxima de cada anestésico (peso real, mesmos tetos dos cards acima). Mantenha o total &lt; 100%.</div></div>`;
+    host.addEventListener('input', renderALMix);
+    host.addEventListener('change', renderALMix);
+  }
+  const w = W(), out = document.getElementById('lam-out');
+  if (!w) { out.innerHTML = `<div class="dilution-note">Informe o peso no painel.</div>`; return; }
+  const v = id => parseFloat(document.getElementById(id).value) || 0;
+  const r = laMix(Object.keys(LA_MAX).map(key => ({ key, pct: v(`lam-${key}-pct`), ml: v(`lam-${key}-ml`), vaso: !!document.getElementById(`lam-${key}-vaso`)?.checked })), w);
+  if (!r.rows.length) { out.innerHTML = ''; return; }
+  const pctTot = r.total * 100, color = pctTot > 100 ? 'var(--red)' : pctTot > 80 ? 'var(--orange)' : 'var(--green)';
+  out.innerHTML = `<div class="dose-table">${r.rows.map(i => `<div class="dose-row"><span class="dose-label">${LA_MAX[i.key].name} ${f(i.mg,0)} mg / máx ${f(i.max,0)} mg</span><span class="dose-val">${f(i.frac*100,0)}<span class="dose-unit"> %</span></span></div>`).join('')}
+    <div class="dose-row"><span class="dose-label"><strong>Total da dose máxima combinada</strong></span><span class="dose-val" style="color:${color}">${f(pctTot,0)}<span class="dose-unit"> %</span></span></div></div>
+    ${pctTot > 100 ? `<div class="dilution-note" style="color:var(--red)"><strong>Acima da dose máxima combinada — risco de LAST.</strong></div>` : ''}`;
+}
+
 function renderAL() {
-  const el = document.getElementById('tab-al');
+  const el = document.getElementById('al-out');
   const w = W();
   if (!w) { el.innerHTML = noWeight(); return; }
 
@@ -1631,10 +1689,7 @@ function renderAL() {
       color: 'var(--accent)',
       sub: 'Amida — bloqueios superficiais, venosos, espinhal',
       onset: '2–5 min', duration: '1–3 h',
-      doses: [
-        { label: 'Sem vasoconstritor', doseKg: 4.5, absMax: 300, vaso: false },
-        { label: 'Com vasoconstritor (epi 1:200.000)', doseKg: 7, absMax: 500, vaso: true },
-      ],
+      doses: LA_MAX.lido.doses,
       concs: [
         { label: '0,5%', mgml: 5 },
         { label: '1%',   mgml: 10 },
@@ -1654,10 +1709,7 @@ function renderAL() {
       color: 'var(--red)',
       sub: 'Amida — bloqueios longos, peridural, raquianestesia',
       onset: '15–30 min', duration: '4–12 h',
-      doses: [
-        { label: 'Sem vasoconstritor', doseKg: 2, absMax: 150, vaso: false },
-        { label: 'Com vasoconstritor (epi 1:200.000)', doseKg: 2.5, absMax: 200, vaso: true },
-      ],
+      doses: LA_MAX.bupi.doses,
       concs: [
         { label: '0,25%', mgml: 2.5 },
         { label: '0,5%',  mgml: 5   },
@@ -1678,9 +1730,7 @@ function renderAL() {
       color: 'var(--orange)',
       sub: 'Amida — isômero S(−) da bupivacaína, menos tóxica',
       onset: '15–30 min', duration: '4–12 h',
-      doses: [
-        { label: 'Dose máxima', doseKg: 2, absMax: 150, vaso: false },
-      ],
+      doses: LA_MAX.levo.doses,
       concs: [
         { label: '0,25%', mgml: 2.5 },
         { label: '0,5%',  mgml: 5   },
@@ -1700,9 +1750,7 @@ function renderAL() {
       color: 'var(--green)',
       sub: 'Amida — bloqueios periféricos, peridural, menos tóxica',
       onset: '10–20 min', duration: '4–8 h',
-      doses: [
-        { label: 'Dose máxima', doseKg: 3, absMax: 250, vaso: false },
-      ],
+      doses: LA_MAX.ropi.doses,
       concs: [
         { label: '0,2%',  mgml: 2   },
         { label: '0,5%',  mgml: 5   },
@@ -2367,8 +2415,28 @@ if (location.search.includes('teste')) {
   ok(Math.round(ckdEpi(1.0, 50, 'M')) === 92, 'CKD-EPI 2021: 50a ♂ Cr 1,0 = 92');
   ok(Math.round(cockcroft(1.0, 40, 70, 'M')) === 97, 'Cockcroft-Gault: 40a ♂ 70kg Cr 1,0 = 97');
   ok(hbRef(60, 'M')[2] === 9.0 && hbRef(30*365, 'F')[2] === 12.0, 'Hb mínima: 2 meses 9,0 · adulta 12,0');
+  const mix = laMix([{ key: 'lido', pct: 2, ml: 10, vaso: false }, { key: 'ropi', pct: 0.5, ml: 20, vaso: false }], 70);
+  ok(Math.round(mix.total * 100) === 114, 'Mistura AL 70kg: lido 2% 10ml (200/300) + ropi 0,5% 20ml (100/210) = 114%');
+  const b = BolusCalc.bolus(100, 2, 10, 50);
+  ok(b.ok && b.conc === 10 && b.diluent === 8 && b.draw === 5, 'Bolus: 100mg/2ml diluído p/ 10ml, 50mg = 5ml');
+  ok(!BolusCalc.bolus(100, 2, 10, 150).ok, 'Bolus: dose maior que o preparado dá erro');
+  ok(ScalesCalc.egri({ mouth: 1, tmd: 2, mall: 1, neck: 0, prog: 0, weight: 0, hist: 0 }).difficult, 'EGRI 4 = laringoscopia difícil');
+  ok(!ScalesCalc.egri({ mouth: 1, tmd: 1, mall: 1 }).difficult, 'EGRI 3 = não');
   console.log('autoteste concluído');
 }
+
+/* Atualização manual: pede ao service worker a versão nova e recarrega quando ela assumir */
+async function checkUpdate(btn) {
+  const reg = 'serviceWorker' in navigator && await navigator.serviceWorker.getRegistration();
+  if (!reg) { location.reload(); return; }
+  btn.textContent = 'Procurando…';
+  try { await reg.update(); } catch (e) { btn.textContent = 'Sem internet — tente de novo'; return; }
+  const nw = reg.installing || reg.waiting;
+  if (!nw) { btn.textContent = 'Você já tem a última versão'; return; }
+  btn.textContent = 'Atualizando…';
+  nw.addEventListener('statechange', () => { if (nw.state === 'activated') location.reload(); });
+}
+if (window.caches) caches.keys().then(k => { const v = k.find(n => n.startsWith('anest-tools')); if (v) document.getElementById('app-ver').textContent = v.replace('anest-tools-', ''); }).catch(() => {});
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');

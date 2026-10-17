@@ -487,7 +487,7 @@
    * @returns {void}
    */
   function build() {
-    const pane = document.getElementById('tab-inf');
+    const pane = document.getElementById('inf-root');
     if (!pane || ui.built) return;
     pane.innerHTML = `
       <div class="sec-hdr">Infusão (bomba)</div>
@@ -1019,7 +1019,7 @@
    * @returns {void}
    */
   function bind() {
-    const pane = document.getElementById('tab-inf');
+    const pane = document.getElementById('inf-root');
 
     pane.addEventListener('input', (e) => {
       const id = e.target.id;
