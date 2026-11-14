@@ -51,7 +51,8 @@ Clinical drug dose calculator for anaesthesia, critical care, and emergency medi
 | Drug | Weight |
 |------|--------|
 | Fentanil, Propofol, Morfina | LBW |
-| Midazolam, Rocurônio, Dexmedetomidina, Neostigmina, Sugamadex | IBW |
+| Midazolam, Rocurônio (IOT eletiva), Dexmedetomidina, Neostigmina | IBW |
+| Rocurônio (RSI), Sugamadex (bula: peso real) | TBW |
 | Etomidato, Cetamina, Succinilcolina, Tramadol, Atropina, MgSO₄ | TBW |
 
 ---

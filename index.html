@@ -1332,15 +1332,15 @@ function renderIOT() {
       iotNote:`Frasco 10mg/ml | Sem diluição | Infusão → aba Sedação`,
       badges:[{t:'Broncodilatador',c:'bg'},{t:'Hipotensão importante',c:'br'}],
     }})(),
-    (() => { const wt = mk('IBW'); return {
+    (() => { const wt = mk('IBW'), wr = mk('TBW'), obese = wt < wr; return {
       id:'roc', wtype:'IBW', name:'Rocurônio', color:'var(--green)',
       sub:'BNM não-despolarizante — duração longa', conc:'10 mg/ml (amp 5ml)', hasModes:false,
       iotRows:[
-        {l:'IOT  1 mg/kg', v:`${f(wt*1/10)} ml`, u:`= ${f(wt*1)} mg`},
-        {l:'RSI  1,2 mg/kg', v:`${f(wt*1.2/10)} ml`, u:`= ${f(wt*1.2)} mg`},
-        {l:'Sugamadex reversão rápida  16 mg/kg', v:`${f(wt*16/100)} ml`, u:`= ${f(wt*16)} mg (200mg/2ml)`},
+        {l:`IOT  1 mg/kg${obese ? ' (IBW)' : ''}`, v:`${f(wt*1/10)} ml`, u:`= ${f(wt*1)} mg`},
+        {l:`RSI  1,2 mg/kg${obese ? ' (peso real)' : ''}`, v:`${f(wr*1.2/10)} ml`, u:`= ${f(wr*1.2)} mg`},
+        {l:`Sugamadex reversão rápida  16 mg/kg${obese ? ' (peso real)' : ''}`, v:`${f(wr*16/100)} ml`, u:`= ${f(wr*16)} mg (200mg/2ml)`},
       ],
-      iotNote:`Sem diluição | Início: 45-60s | Duração: ~45min`,
+      iotNote:`Sem diluição | Início: 45-60s | Duração: ~45min${obese ? '<br>Obeso: IOT eletiva pelo IBW; RSI e sugamadex pelo peso real (início mais rápido; bula do sugamadex = peso real)' : ''}`,
       badges:[{t:'Revertível: Sugamadex',c:'bg'},{t:'Duração 45min',c:'bw'}],
     }})(),
     (() => { const wt = mk('TBW'); return {
@@ -1479,8 +1479,8 @@ function renderAdj() {
           iotNote:`<strong>Sempre + Atropina 0,015mg/kg:</strong> ${f(wt*0.015/0.5,2)} ml (0,5mg/ml)<br>Só com TOF 4 com fadiga (ASA 2023) — TOF &lt;4: preferir Sugamadex`,
           badges:[{t:'Sempre + Atropina',c:'br'},{t:'Só TOF 4 c/ fadiga',c:'bw'},{t:'Máx 5mg',c:'bw'}],
         }})(),
-        (() => { const wt = wByType('IBW'); return {
-          id:'sug', wtype:'IBW', name:'Sugamadex', color:'var(--green)',
+        (() => { const wt = wByType('TBW'); return {
+          id:'sug', wtype:'TBW', name:'Sugamadex', color:'var(--green)',
           sub:'Reversão seletiva Rocurônio / Vecurônio', conc:'200 mg/2ml (amp)', hasModes:false,
           iotRows:[
             {l:'Rotina — TOF ≥ 2  (2 mg/kg)', v:`${f(wt*2/100,1)} ml`, u:`= ${f(wt*2,0)} mg`},
@@ -1488,7 +1488,7 @@ function renderAdj() {
             {l:'Imediata RSI  (16 mg/kg)', v:`${f(wt*16/100,1)} ml`, u:`= ${f(wt*16,0)} mg`},
           ],
           iotNote:`100mg/ml | Bolus EV rápido | Sem diluição<br><strong>Reversão imediata: 3min após Roc 1,2mg/kg</strong>`,
-          badges:[{t:'Específico Roc/Vec',c:'bi'},{t:'Dose por IBW',c:'bi'},{t:'TOF guia dose',c:'bw'}],
+          badges:[{t:'Específico Roc/Vec',c:'bi'},{t:'Dose por peso real (bula)',c:'bi'},{t:'TOF guia dose',c:'bw'}],
         }})(),
       ],
     },
@@ -2454,7 +2454,8 @@ if (location.search.includes('teste')) {
   document.getElementById('weight').value = 70; document.getElementById('height').value = 170; setSex('M');
   const t = id => document.getElementById(id).textContent, ok = (c, m) => console.assert(c, 'FALHOU: ' + m);
   ok(t('tab-al').includes('Bolus: 105 ml'), 'Intralipid 70kg = 105 ml');
-  ok(t('tab-iot').includes(f(wByType('IBW')*16/100) + ' ml= ' + f(wByType('IBW')*16) + ' mg'), 'Sugamadex 16mg/kg em 100mg/ml');
+  ok(t('tab-iot').includes(f(wByType('TBW')*16/100) + ' ml= ' + f(wByType('TBW')*16) + ' mg'), 'Sugamadex 16mg/kg pelo peso real em 100mg/ml');
+  ok(t('tab-iot').includes('RSI  1,2 mg/kg (peso real)') && t('tab-iot').includes(f(70*1.2/10) + ' ml= ' + f(70*1.2) + ' mg'), 'Rocurônio RSI 70kg pelo peso real = 8.4 ml');
   ok(t('tab-sed').includes('1Sedação leve7') && t('tab-iot').includes('Infusão → aba Sedação'), 'Cetamina 1mg/kg/h = 7 ml/h só na aba Sedação');
   ok(calcLBW(170, 160, 'F') > calcLBW(120, 160, 'F'), 'LBW cresce com o peso');
   ok(wByType('IBW') <= 70 && wByType('LBW') <= 70, 'nunca acima do peso real');
