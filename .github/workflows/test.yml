@@ -16,3 +16,11 @@ jobs:
         with:
           node-version: 22
       - run: node --test
+      - name: Autoteste no navegador (index.html?teste)
+        run: |
+          google-chrome --headless=new --disable-gpu --no-sandbox --enable-logging=stderr --v=0 \
+            --virtual-time-budget=5000 --dump-dom "file://$PWD/index.html?teste" 2> chrome.log > /dev/null || true
+          grep -o 'FALHOU[^"]*' chrome.log && exit 1
+          grep 'Uncaught' chrome.log | grep -v ServiceWorker && exit 1
+          grep -q 'autoteste concluído' chrome.log || { echo 'autoteste não terminou'; tail -50 chrome.log; exit 1; }
+          echo 'autoteste ok'

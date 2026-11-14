@@ -22,6 +22,7 @@
   const D = root.Drugs || (typeof require === 'function' ? require('./drugs.js') : null);
   const DANT = D.dant, DANT_MH = DANT.doses.crisis.mh;
   const nf = (n) => String(n).replace('.', ',');
+  const fmtN = (n) => String(+n.toFixed(n < 1 ? 2 : 1)).replace('.', ',');
 
   /**
    * Dantrolene for malignant hyperthermia (MHAUS): 2.5 mg/kg, repeat until
@@ -38,6 +39,29 @@
     return { dose, vials, water: vials * DANT.vialWaterMl, max, remaining: Math.max(0, max - (givenMg || 0)) };
   }
 
+  /** Below this weight the tab switches to pediatric doses. */
+  const PEDS_KG = 40;
+  /**
+   * Pediatric mode?
+   * @param {number} kg Panel weight.
+   * @returns {boolean}
+   */
+  function isPeds(kg) { return kg > 0 && kg < PEDS_KG; }
+
+  /**
+   * Adrenaline dose in cardiac arrest: 1 mg (adult) or 0.01 mg/kg up to 1 mg of 0.1 mg/mL (child).
+   * @param {number} kg Panel weight.
+   * @returns {{mg: number, ml: number, concText: string}}
+   */
+  function adrenalineArrest(kg) {
+    if (isPeds(kg)) {
+      const p = D.adre.doses.peds.arrest, mg = Math.min(p.perKg * kg, p.max);
+      return { mg, ml: mg / p.conc, concText: `${nf(p.conc)} mg/mL (${p.prep})` };
+    }
+    const mg = D.adre.doses.crisis.arrest.dose;
+    return { mg, ml: mg / D.adre.conc, concText: D.adre.concText };
+  }
+
   /**
    * Anaphylaxis doses (RCUK 2021 / NAP6).
    * @param {number} kg Weight (0 = unknown, adult values only).
@@ -46,8 +70,8 @@
   function anaphylaxis(kg) {
     return {
       imMg: kg > 0 ? Math.min(D.adre.doses.crisis.anaphylaxisIM.perKg * kg, D.adre.doses.crisis.anaphylaxisIM.max) : D.adre.doses.crisis.anaphylaxisIM.max,
-      fluidMin: kg > 0 ? 10 * kg : 0,
-      fluidMax: kg > 0 ? 20 * kg : 0,
+      fluidMin: kg > 0 ? D.crystalloid.doses.crisis.bolus.perKg[0] * kg : 0,
+      fluidMax: kg > 0 ? D.crystalloid.doses.crisis.bolus.perKg[1] * kg : 0,
     };
   }
 
@@ -59,7 +83,7 @@
   function hemorrhage(kg) {
     if (!(kg > 0)) return null;
     return {
-      bloodVolume: 70 * kg,
+      bloodVolume: (isPeds(kg) ? 80 : 70) * kg, // mL/kg: criança ~80, adulto ~70
       cryoUnits: Math.ceil(kg / 10),
       fibMin: 25 * kg,
       fibMax: 50 * kg,
@@ -78,14 +102,27 @@
   }
 
   /**
-   * Next amiodarone dose in cardiac arrest (300 mg, then 150 mg).
+   * Next amiodarone dose in cardiac arrest: 300 then 150 mg (adult), 5 mg/kg up to 3× (child).
    * @param {number} given Doses already given.
+   * @param {number} [kg] Panel weight (pediatric below 40 kg).
    * @returns {string}
    */
-  function nextAmiodarone(given) {
+  function nextAmiodarone(given, kg) {
+    if (given >= maxAmiodarone(kg)) return 'dose máxima atingida';
+    if (isPeds(kg)) {
+      const p = D.amio.doses.peds.arrest;
+      return `${fmtN(Math.min(p.perKg * kg, p.max))} mg`;
+    }
     const a = D.amio.doses.crisis.arrest;
-    return given === 0 ? `${a.first} mg` : given === 1 ? `${a.second} mg` : 'dose máxima atingida';
+    return given === 0 ? `${a.first} mg` : `${a.second} mg`;
   }
+
+  /**
+   * How many amiodarone boluses in cardiac arrest: 2 (adult) or 3 (child, PALS).
+   * @param {number} kg Panel weight.
+   * @returns {number}
+   */
+  function maxAmiodarone(kg) { return isPeds(kg) ? D.amio.doses.peds.arrest.maxDoses : 2; }
 
   /**
    * Clock text.
@@ -99,7 +136,7 @@
     return h ? `${h}:${p(m)}:${p(sec)}` : `${p(m)}:${p(sec)}`;
   }
 
-  root.CrisesCalc = { dantrolene, anaphylaxis, hemorrhage, adrenalineState, nextAmiodarone, clock };
+  root.CrisesCalc = { PEDS_KG, isPeds, adrenalineArrest, dantrolene, anaphylaxis, hemorrhage, adrenalineState, nextAmiodarone, maxAmiodarone, clock };
 
   if (typeof document === 'undefined') return; // Node (tests): calculation layer only
 
@@ -205,7 +242,7 @@
       pcr.lastAdre = Date.now();
       pcr.adreAlert = '';
       pcr.adre++;
-      logEvent(`Adrenalina 1 mg (${pcr.adre}ª)`);
+      logEvent(`Adrenalina ${fmtN(adrenalineArrest(panelKg()).mg)} mg (${pcr.adre}ª)`);
     },
     shock() {
       if (!pcr.start || pcr.stop) return;
@@ -213,8 +250,8 @@
       logEvent(`Choque ${pcr.shocks}`);
     },
     amio() {
-      if (!pcr.start || pcr.stop || pcr.amio >= 2) return;
-      logEvent(`Amiodarona ${CrisesCalc.nextAmiodarone(pcr.amio)}`);
+      if (!pcr.start || pcr.stop || pcr.amio >= maxAmiodarone(panelKg())) return;
+      logEvent(`Amiodarona ${nextAmiodarone(pcr.amio, panelKg())}`);
       pcr.amio++;
     },
     rosc() {
@@ -228,6 +265,7 @@
       if (pcr.start && !confirm('Zerar timers e registro da PCR?')) return;
       Object.assign(pcr, { start: 0, stop: 0, cycleStart: 0, lastAdre: 0, adre: 0, shocks: 0, amio: 0, log: [] });
       keepAwake(false);
+      if (metro.on) metroToggle();
     },
     metro: metroToggle,
   };
@@ -293,10 +331,12 @@
 
     $('cr-n-adre').textContent = pcr.adre;
     $('cr-n-shock').textContent = pcr.shocks;
-    $('cr-n-amio').textContent = pcr.amio < 2 ? CrisesCalc.nextAmiodarone(pcr.amio) : 'máx';
+    const kgNow = panelKg(), am = maxAmiodarone(kgNow);
+    $('cr-n-amio').textContent = pcr.amio < am ? nextAmiodarone(pcr.amio, kgNow) : 'máx';
+    $('cr-adre-dose').textContent = `${fmtN(adrenalineArrest(kgNow).mg)} mg`;
     $('cr-btn-start').textContent = pcr.start ? (pcr.stop ? 'Nova PCR' : 'PCR em curso') : '▶ Iniciar PCR';
     $('cr-btn-start').disabled = !!running;
-    ['rhythm', 'adre', 'shock', 'amio', 'rosc'].forEach((k) => { $(`cr-btn-${k}`).disabled = !running || (k === 'amio' && pcr.amio >= 2); });
+    ['rhythm', 'adre', 'shock', 'amio', 'rosc'].forEach((k) => { $(`cr-btn-${k}`).disabled = !running || (k === 'amio' && pcr.amio >= am); });
     $('cr-btn-metro').textContent = metro.on ? `■ Metrônomo ${metro.bpm}/min` : `♪ Metrônomo ${metro.bpm}/min`;
     $('cr-btn-metro').classList.toggle('cr-on', metro.on);
 
@@ -339,9 +379,9 @@
         <div class="cr-btns">
           ${btn('start', '▶ Iniciar PCR', 'cr-primary')}
           ${btn('rhythm', 'Ritmo checado')}
-          ${btn('adre', 'Adrenalina 1 mg <b id="cr-n-adre">0</b>', 'cr-red')}
+          ${btn('adre', 'Adrenalina <span id="cr-adre-dose"></span> <b id="cr-n-adre">0</b>', 'cr-red')}
           ${btn('shock', 'Choque <b id="cr-n-shock">0</b>', 'cr-orange')}
-          ${btn('amio', `Amiodarona <b id="cr-n-amio">${nextAmiodarone(0)}</b>`)}
+          ${btn('amio', 'Amiodarona <b id="cr-n-amio"></b>')}
           ${btn('rosc', 'RCE / parar', 'cr-green')}
         </div>
         <div class="cr-btns">
@@ -349,13 +389,14 @@
           <select id="cr-bpm" class="hid-input" style="width:auto" aria-label="Frequência do metrônomo"><option>100</option><option selected>110</option><option>120</option></select>
           ${btn('reset', 'Zerar', 'cr-ghost')}
         </div>
+        <div class="dose-table" id="cr-pcr-doses"></div>
         <div class="dilution-note">Bipes: 3 no fim do ciclo, 1 quando a adrenalina pode ser repetida (3 min), 2 se passar de 5 min. A tela fica acesa enquanto a PCR estiver em curso, se o aparelho permitir.</div>
       </div>
       <div class="sec-hdr">Registro</div>
       <div class="drug-card"><div class="dose-table" id="cr-pcr-log"></div></div>
       ${card('Causas reversíveis (5H e 5T)', 'var(--yellow)', '',
         `<div class="dose-table">${kv('Hipovolemia · Hipóxia · H⁺ (acidose)', '')}${kv('Hipo/hipercalemia · Hipotermia', '')}${kv('Tensão (pneumotórax) · Tamponamento', '')}${kv('Toxinas (incl. anestésico local → aba An.Local) · Trombose coronária/pulmonar', '')}</div>`,
-        `FV/TV sem pulso: choque → 2 min RCP; adrenalina após o 2º choque; amiodarona ${D.amio.doses.crisis.arrest.first} mg após o 3º, ${D.amio.doses.crisis.arrest.second} mg após o 5º. Pós-RCE: ${D.amio.doses.crisis.postRosc.steps.map((x) => `${nf(x.rate)} ${D.amio.doses.crisis.postRosc.rateUnit} por ${x.duration}`).join(' → ')}. AESP/assistolia: adrenalina assim que possível (AHA 2020).`)}`;
+        'FV/TV sem pulso: choque → 2 min RCP; adrenalina após o 2º choque; amiodarona após o 3º e o 5º choque (doses no quadro da PCR, pelo peso do painel). AESP/assistolia: adrenalina assim que possível (AHA 2020 / PALS).')}`;
   }
 
   function hmMarkup() {
@@ -385,24 +426,15 @@
         'Via aérea: O₂ 100%; aprofundar a anestesia só se não houver hipotensão.',
         'Elevar os membros inferiores; acesso calibroso.',
         '<b>Adrenalina</b> é a droga principal; repetir a cada 5 min ou iniciar infusão (aba Vasoat.) se forem necessárias ≥ 2 doses.',
-        'Sem pulso: protocolo de PCR (aba PCR) com adrenalina 1 mg.',
-        'Refratária: vasopressina, noradrenalina; <b>glucagon 1–2 mg EV</b> se em uso de β-bloqueador.',
-        'Após estabilizar: hidrocortisona 200 mg EV e anti-H1 (não substituem a adrenalina).',
+        'Sem pulso: protocolo de PCR (botão PCR acima).',
+        'Refratária: vasopressina, noradrenalina; <b>glucagon</b> se em uso de β-bloqueador (dose no quadro Doses).',
+        'Após estabilizar: hidrocortisona e anti-H1 (não substituem a adrenalina).',
         'Colher <b>triptase</b> logo após a ressuscitação, em 1–2 h e após 24 h. Encaminhar para investigação alérgica.',
       ]))}`;
   }
 
   function kMarkup() {
-    return `
-      ${card('Hipercalemia', 'var(--orange)', 'UK Kidney Association 2023', `<div class="dose-table">
-        ${kv('1. Estabilizar a membrana', `<b>Gluconato de cálcio 10% ${D.calGluc.doses.crisis.hyperK.dose / D.calGluc.conc} mL</b> EV em 5–10 min<br><span class="dose-unit">ou cloreto de cálcio 10% 10 mL (acesso central). Repetir se ECG não melhorar.</span>`)}
-        ${kv('2. Insulina + glicose', '<b>Insulina regular 10 U</b> + 25 g de glicose<br><span class="dose-unit">= glicose 50% 50 mL ou glicose 10% 250 mL em 15–30 min. Glicemia a cada hora por 6 h.</span>')}
-        ${kv('3. β₂-agonista', 'Salbutamol 10–20 mg inalatório<br><span class="dose-unit">(adjuvante; não usar isolado)</span>')}
-        ${kv('4. Acidose metabólica', `Bicarbonato de sódio 8,4% ${D.bicarb.doses.crisis.hyperK.dose / D.bicarb.conc} mL<br><span class="dose-unit">só com acidose; não misturar com cálcio na mesma via</span>`)}
-        ${kv('5. Remover K⁺', 'Diurético de alça, resina; <b>diálise</b> se refratária ou insuficiência renal')}
-      </div>`,
-        'No intraoperatório: hiperventilar, suspender succinilcolina e fontes de K⁺ (soluções com K⁺, hemácias antigas). PCR por hipercalemia: cálcio + bicarbonato + insulina/glicose durante a RCP.')}
-      <div class="cr-doses" data-crisis="k"></div>`;
+    return `<div class="cr-doses" data-crisis="k"></div>`;
   }
 
   function hemMarkup() {
@@ -438,40 +470,87 @@
     }
     if (crisis === 'ana') {
       const a = CrisesCalc.anaphylaxis(kg);
-      return card('Doses', 'var(--red)', kg ? `Peso ${fmt(kg)} kg` : 'Doses de adulto (sem peso)',
+      return card('Doses', 'var(--red)', kg ? `Peso ${fmt(kg)} kg${isPeds(kg) ? ' · criança' : ''}` : 'Doses de adulto (sem peso)',
         `<div class="dose-table">
           ${kv('Adrenalina IM (sem acesso)', `<b>${fmt(a.imMg, 2)} mg</b> = ${fmt(a.imMg, 2)} mL de 1 mg/mL<br><span class="dose-unit">0,01 mg/kg, máx 0,5 mg; repetir em 5 min</span>`)}
-          ${(() => { const iv = D.adre.doses.crisis.anaphylaxisIV; return kv('Adrenalina EV — hipotensão grave', `<b>${iv.mcg} mcg</b> = ${nf(iv.mcg / iv.concMcg)} mL de ${iv.concMcg} mcg/mL<br><span class="dose-unit">${iv.prep}; titular 50–100 mcg a cada 1–2 min</span>`); })()}
-          ${kv('Adrenalina EV — PCR', '1 mg a cada 3–5 min')}
-          ${kv('Cristaloide em bolus', kg ? `<b>${fmt(a.fluidMin, 0)}–${fmt(a.fluidMax, 0)} mL</b><br><span class="dose-unit">10–20 mL/kg, repetir conforme resposta</span>` : '500–1000 mL, repetir')}
+          ${(() => { const iv = D.adre.doses.crisis.anaphylaxisIV;
+            if (isPeds(kg)) { const pv = D.adre.doses.peds.anaphylaxisIV, mcg = pv.mcgPerKg * kg; return kv('Adrenalina EV — hipotensão grave', `<b>${fmt(mcg, 0)} mcg</b> = ${fmt(mcg / iv.concMcg, 1)} mL de ${iv.concMcg} mcg/mL<br><span class="dose-unit">${pv.mcgPerKg} mcg/kg, titulado; só por quem tem experiência</span>`); }
+            return kv('Adrenalina EV — hipotensão grave', `<b>${iv.mcg} mcg</b> = ${nf(iv.mcg / iv.concMcg)} mL de ${iv.concMcg} mcg/mL<br><span class="dose-unit">${iv.prep}; titular 50–100 mcg a cada 1–2 min</span>`); })()}
+          ${(() => { const ar = adrenalineArrest(kg); return kv('Adrenalina EV — PCR', `${fmtN(ar.mg)} mg${isPeds(kg) ? ` = ${fmtN(ar.ml)} mL de ${ar.concText}` : ''} a cada 3–5 min`); })()}
+          ${kv('Cristaloide em bolus', kg ? `<b>${fmt(a.fluidMin, 0)}–${fmt(a.fluidMax, 0)} mL</b><br><span class="dose-unit">${D.crystalloid.doses.crisis.bolus.perKg.join('–')} mL/kg, repetir conforme resposta</span>` : '500–1000 mL, repetir')}
+          ${isPeds(kg) ? kv('Glucagon · hidrocortisona', 'dose pediátrica conforme protocolo do serviço') :
+            kv('Glucagon (se β-bloqueador)', `${D.glucagon.doses.crisis.anaphylaxis.doseMin}–${D.glucagon.doses.crisis.anaphylaxis.doseMax} mg EV`) +
+            kv('Hidrocortisona (após estabilizar)', `${D.hcort.doses.crisis.anaphylaxis.dose} mg EV`)}
         </div>`,
         (() => { const i = D.adre.doses.crisis.infusion; return `Infusão de adrenalina ${nf(i.rateMin)}–${nf(i.rateMax)} ${i.rateUnit} (${i.prep} = ${i.prepConc} mcg/mL): tabela na aba Vasoat.`; })());
     }
     if (crisis === 'k') {
-      if (!kg || kg >= 40) return '';
-      return card('Criança (< 40 kg)', 'var(--orange)', `Peso ${fmt(kg)} kg`,
-        `<div class="dose-table">
-          ${(() => { const c = D.calGluc.doses.peds.hyperK, cc = D.calGluc.conc; return kv(`Gluconato de cálcio 10% ${nf(c.perKg / cc)} mL/kg`, `${fmt(Math.min(c.perKg * kg, c.max) / cc, 1)} mL (máx ${c.max / cc} mL)`); })()}
-          ${kv('Insulina 0,1 U/kg + glicose 0,5 g/kg', `${fmt(Math.min(0.1 * kg, 10), 1)} U + ${fmt(Math.min(0.5 * kg, 25), 1)} g (glicose 10% ${fmt(Math.min(5 * kg, 250), 0)} mL)`)}
-        </div>`, 'Peso de criança no painel adulto: confira na aba Ped.');
+      const noteK = 'No intraoperatório: hiperventilar, suspender succinilcolina e fontes de K⁺ (soluções com K⁺, hemácias antigas). PCR por hipercalemia: cálcio + bicarbonato + insulina/glicose durante a RCP.';
+      const G = D.glucose, g50 = G.concs[0].conc, g10 = G.concs[1].conc;
+      if (isPeds(kg)) {
+        const c = D.calGluc.doses.peds.hyperK, ins = D.insulin.doses.peds.hyperK, gl = G.doses.peds.hyperK, b = D.bicarb.doses.peds.hyperK;
+        const caMg = Math.min(c.perKg * kg, c.max), u = Math.min(ins.perKg * kg, ins.max), gg = Math.min(gl.perKg * kg, gl.max), mEq = Math.min(b.perKg * kg, b.max);
+        return card('Hipercalemia — criança', 'var(--orange)', `Peso ${fmt(kg)} kg · PALS`, `<div class="dose-table">
+          ${kv(`1. Gluconato de cálcio 10% ${nf(c.perKg / D.calGluc.conc)} mL/kg`, `<b>${fmt(caMg / D.calGluc.conc, 1)} mL</b> = ${fmt(caMg, 0)} mg em 5–10 min`)}
+          ${kv(`2. Insulina ${nf(ins.perKg)} U/kg + glicose ${nf(gl.perKg)} g/kg`, `<b>${fmt(u, 1)} U</b> + ${fmt(gg, 1)} g<br><span class="dose-unit">= glicose 10% ${fmt(gg / g10, 0)} mL. Glicemia a cada hora.</span>`)}
+          ${kv(`3. Bicarbonato 8,4% ${nf(b.perKg)} mEq/kg (se acidose)`, `<b>${fmt(mEq / D.bicarb.conc, 0)} mL</b> = ${fmt(mEq, 0)} mEq<br><span class="dose-unit">lactente: diluir 1:1 (4,2%)</span>`)}
+          ${kv('4. β₂-agonista e remoção de K⁺', 'Salbutamol inalatório e diálise conforme protocolo pediátrico')}
+        </div>`, noteK);
+      }
+      const ca = D.calGluc.doses.crisis.hyperK.dose, cl = D.caCl.doses.crisis.hyperK.dose, ins = D.insulin.doses.crisis.hyperK.dose,
+        gl = G.doses.crisis.hyperK.dose, sb = D.salbutamol.doses.crisis.hyperK, bc = D.bicarb.doses.crisis.hyperK.dose;
+      return card('Hipercalemia', 'var(--orange)', 'Adulto · UK Kidney Association 2023', `<div class="dose-table">
+        ${kv('1. Estabilizar a membrana', `<b>Gluconato de cálcio 10% ${ca / D.calGluc.conc} mL</b> EV em 5–10 min<br><span class="dose-unit">ou cloreto de cálcio 10% ${cl / D.caCl.conc} mL (acesso central). Repetir se ECG não melhorar.</span>`)}
+        ${kv('2. Insulina + glicose', `<b>Insulina regular ${ins} U</b> + ${gl} g de glicose<br><span class="dose-unit">= glicose 50% ${gl / g50} mL ou glicose 10% ${gl / g10} mL em 15–30 min. Glicemia a cada hora por 6 h.</span>`)}
+        ${kv('3. β₂-agonista', `Salbutamol ${sb.doseMin}–${sb.doseMax} mg inalatório<br><span class="dose-unit">(adjuvante; não usar isolado)</span>`)}
+        ${kv('4. Acidose metabólica', `Bicarbonato de sódio 8,4% ${bc / D.bicarb.conc} mL<br><span class="dose-unit">só com acidose; não misturar com cálcio na mesma via</span>`)}
+        ${kv('5. Remover K⁺', 'Diurético de alça, resina; <b>diálise</b> se refratária ou insuficiência renal')}
+      </div>`, noteK);
     }
     if (crisis === 'hem') {
       const h = CrisesCalc.hemorrhage(kg);
-      return card('Doses', 'var(--red)', h ? `Peso ${fmt(kg)} kg` : '',
+      return card('Doses', 'var(--red)', h ? `Peso ${fmt(kg)} kg${isPeds(kg) ? ' · criança' : ''}` : 'Adulto (sem peso)',
         `<div class="dose-table">
-          ${kv('Ácido tranexâmico', '<b>1 g</b> EV em 10 min + 1 g em 8 h<br><span class="dose-unit">(ou 2º bolus de 1 g)</span>')}
-          ${kv('Cálcio', 'Gluconato 10% 30 mL ou cloreto 10% 10 mL<br><span class="dose-unit">a cada ~4 unidades de hemoderivado ou se Ca²⁺i &lt; 1,1</span>')}
+          ${(() => {
+            const T = D.txa.doses;
+            if (isPeds(kg)) {
+              const l = T.peds.loading, mg = Math.min(l.perKg * kg, l.max), c = D.calGluc.doses.peds.hemorrhage, ca = Math.min(c.perKg * kg, c.max);
+              return kv(`Ácido tranexâmico ${l.perKg} mg/kg`, `<b>${fmt(mg, 0)} mg</b> EV em 10 min (máx ${l.max / 1000} g)<br><span class="dose-unit">+ ${T.peds.infusion.rate} ${T.peds.infusion.rateUnit} = ${fmt(T.peds.infusion.rate * kg, 0)} mg/h</span>`) +
+                kv(`Gluconato de cálcio 10% ${nf(c.perKg / D.calGluc.conc)} mL/kg`, `<b>${fmt(ca / D.calGluc.conc, 1)} mL</b><br><span class="dose-unit">se Ca²⁺i &lt; 1,1 ou a cada ~40 mL/kg de hemoderivado</span>`);
+            }
+            const g = n => nf(n / 1000);
+            return kv('Ácido tranexâmico', `<b>${g(T.crisis.loading.dose)} g</b> EV em 10 min + ${g(T.crisis.infusion.rate)} g em 8 h<br><span class="dose-unit">(ou 2º bolus de ${g(T.crisis.infusion.rate)} g)</span>`) +
+              kv('Cálcio', `Gluconato 10% ${D.calGluc.doses.crisis.hemorrhage.dose / D.calGluc.conc} mL ou cloreto 10% ${D.caCl.doses.crisis.hemorrhage.dose / D.caCl.conc} mL<br><span class="dose-unit">a cada ~4 unidades de hemoderivado ou se Ca²⁺i &lt; 1,1</span>`);
+          })()}
           ${h ? kv('Crioprecipitado 1 U/10 kg', `<b>${h.cryoUnits} unidades</b>`) : ''}
           ${h ? kv('Concentrado de fibrinogênio 25–50 mg/kg', `<b>${fmt(h.fibMin / 1000, 1)}–${fmt(h.fibMax / 1000, 1)} g</b>`) : ''}
-          ${h ? kv('Volemia estimada (70 mL/kg)', `${fmt(h.bloodVolume, 0)} mL<br><span class="dose-unit">maciça: perder 1 volemia em 24 h ou 50% em 3 h</span>`) : ''}
+          ${h ? kv(`Volemia estimada (${isPeds(kg) ? 80 : 70} mL/kg)`, `${fmt(h.bloodVolume, 0)} mL<br><span class="dose-unit">maciça: perder 1 volemia em 24 h ou 50% em 3 h</span>`) : ''}
         </div>`, h ? '' : 'Informe o peso no painel para fibrinogênio e volemia.');
     }
     return '';
   }
 
+  function pcrDoses(kg) {
+    const ar = adrenalineArrest(kg), am = maxAmiodarone(kg);
+    if (isPeds(kg)) {
+      const p = D.amio.doses.peds.arrest;
+      return kv(`Adrenalina ${nf(D.adre.doses.peds.arrest.perKg)} mg/kg`, `<b>${fmtN(ar.mg)} mg</b> = ${fmtN(ar.ml)} mL de ${ar.concText}`) +
+        kv(`Amiodarona ${p.perKg} mg/kg (até ${am}×)`, `<b>${nextAmiodarone(0, kg)}</b>`) +
+        kv('Desfibrilação', `${fmt(2 * kg, 0)} J → ${fmt(4 * kg, 0)} J (máx 10 J/kg)`);
+    }
+    const a = D.amio.doses.crisis;
+    return kv('Adrenalina', `<b>${fmtN(ar.mg)} mg</b> EV/IO a cada 3–5 min`) +
+      kv('Amiodarona', `${a.arrest.first} mg → ${a.arrest.second} mg<br><span class="dose-unit">pós-RCE: ${a.postRosc.steps.map((x) => `${nf(x.rate)} ${a.postRosc.rateUnit} por ${x.duration}`).join(' → ')}</span>`) +
+      kv('Desfibrilação', 'bifásico 120–200 J');
+  }
+
   function refresh() {
     const kg = panelKg();
     document.querySelectorAll('#crises-root .cr-doses').forEach((el) => { el.innerHTML = doses(el.dataset.crisis, kg); });
+    const pd = $('cr-pcr-doses');
+    if (pd) pd.innerHTML = pcrDoses(kg);
+    const ban = $('cr-peds-banner');
+    if (ban) { ban.hidden = !isPeds(kg); ban.innerHTML = `👶 <b>Peso ${fmt(kg)} kg (&lt; ${PEDS_KG} kg): doses pediátricas.</b> Confira também a aba Ped.`; }
     tick();
   }
 
@@ -487,6 +566,7 @@
     if (!rootEl || rootEl.firstChild) return;
     rootEl.innerHTML = `
       <div class="disclaimer">⚠️ Guia de apoio em crise. Não substitui o protocolo do serviço nem o líder da equipe.</div>
+      <div class="disclaimer" id="cr-peds-banner" hidden></div>
       <div class="cr-chips">${CRISES.map((c) => `<button type="button" class="cr-chip" data-show="${c.id}">${c.label}</button>`).join('')}</div>
       <div class="cr-sec" data-sec="pcr">${pcrMarkup()}</div>
       <div class="cr-sec" data-sec="hm">${hmMarkup()}</div>

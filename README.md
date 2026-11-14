@@ -60,16 +60,24 @@ Clinical drug dose calculator for anaesthesia, critical care, and emergency medi
 ## Files
 
 ```
-index.html   — single-file app (all CSS and JS inline)
+index.html   — app shell: CSS, panel, tab rendering and the ?teste self-test
 sw.js        — service worker (offline cache)
 manifest.json — PWA manifest
 icon-192.png  — PWA icon
 icon-512.png  — PWA icon
 js/          — calculation modules (drugs, infusion, bolus, mix, scales, peds, crises)
-               js/drugs.js = fonte única de todas as drogas (doses, apresentações,
-               diluições, tabelas de infusão); as abas só leem dele
+               js/drugs.js = fonte única dos números das drogas (doses, apresentações,
+               diluições, tabelas de infusão); textos de protocolo ficam em cada aba
 test/        — automated tests (node --test)
 ```
+
+---
+
+## Como editar uma dose
+
+1. Altere o número em `js/drugs.js` (nunca na aba) e atualize `source` e `reviewed` da droga. Os campos aceitos estão documentados no início do arquivo; o teste recusa campo desconhecido.
+2. Rode `node --test` e abra `index.html?teste` (resultado no console).
+3. Suba `CACHE` em `sw.js` para os aparelhos instalados baixarem a versão nova.
 
 ---
 
@@ -81,7 +89,7 @@ As camadas de cálculo (`InfusionCalc`, `BolusCalc`, `MixCalc`, `ScalesCalc`, `P
 node --test
 ```
 
-O GitHub Actions (`.github/workflows/test.yml`) roda os mesmos testes a cada push e pull request. O autoteste no navegador (`index.html?teste`, resultado no console) continua cobrindo o que depende da página (pesos, abas, mistura de anestésicos locais).
+O GitHub Actions (`.github/workflows/test.yml`) roda, a cada push e pull request, os testes do Node e o autoteste no navegador (`index.html?teste` no Chrome headless). O autoteste cobre o que depende da página: pesos, cards renderizados (nota de obeso do rocurônio, modo pediátrico da aba Crises, sugamadex em criança), tabelas de infusão e mistura de anestésicos locais.
 
 ---
 

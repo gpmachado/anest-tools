@@ -110,8 +110,59 @@ test('toda droga de drugs.js é usada por alguma aba (sem entrada morta)', () =>
 test('Infusão: presets de fábrica vêm de drugs.js', () => {
   require('../js/drugs.js');
   const I = load('infusion.js', 'InfusionCalc');
-  assert.strictEqual(I.SEED_PRESETS.length, 12);
+  assert.ok(I.SEED_PRESETS.length >= 12);
   for (const p of I.SEED_PRESETS) assert.ok(p.amount > 0 && p.volumeMl > 0, p.seedId);
   const nora = I.SEED_PRESETS.find((p) => p.seedId === 'noradrenalina');
   assert.strictEqual(nora.maxDose, D.nora.doses.adult.infusion.max);
+});
+
+test('drugs.js só usa campos documentados', () => {
+  const TOP = new Set(['name', 'unit', 'conc', 'concText', 'pres', 'doses', 'source', 'reviewed', 'amp', 'powder', 'vialMg', 'vialWaterMl', 'diluted', 'concs']);
+  const SPEC = new Set(['amount', 'amountUnit', 'bradyMin', 'conc', 'concMcg', 'dose', 'doseMax', 'doseMin', 'duration', 'effect', 'first',
+    'fixedAbove70', 'id', 'kind', 'label', 'max', 'maxDay', 'maxDoses', 'maxPerKg', 'mcg', 'mcgPerKg', 'min', 'minMonths', 'name',
+    'neonateConc', 'neonateMonths', 'order', 'perDay', 'perKg', 'perKgList', 'perKgMax', 'perKgMin', 'prep', 'prepConc', 'rate',
+    'rateMax', 'rateMin', 'rateUnit', 'second', 'seed', 'start', 'steps', 'table', 'vaso', 'volumeMl', 'weight']);
+  const walk = (o, at) => {
+    if (Array.isArray(o)) return o.forEach((x, i) => walk(x, `${at}[${i}]`));
+    if (!o || typeof o !== 'object') return;
+    for (const [k, v] of Object.entries(o)) { assert.ok(SPEC.has(k), `campo desconhecido ${at}.${k}`); walk(v, `${at}.${k}`); }
+  };
+  for (const [k, d] of drugs) {
+    for (const f of Object.keys(d)) assert.ok(TOP.has(f), `campo desconhecido ${k}.${f}`);
+    for (const [ctx, inds] of Object.entries(d.doses)) for (const [ind, spec] of Object.entries(inds)) walk(spec, `${k}.doses.${ctx}.${ind}`);
+  }
+});
+
+test('max é sempre número', () => {
+  const walk = (o, at) => {
+    if (Array.isArray(o)) return o.forEach((x, i) => walk(x, `${at}[${i}]`));
+    if (!o || typeof o !== 'object') return;
+    for (const [k, v] of Object.entries(o)) { if (k === 'max') assert.strictEqual(typeof v, 'number', `${at}.max`); walk(v, `${at}.${k}`); }
+  };
+  for (const [k, d] of drugs) walk(d.doses, k);
+});
+
+test('Infusão: todo seed de drugs.js vira preset, em ordem única', () => {
+  const I = load('infusion.js', 'InfusionCalc');
+  const seeds = [];
+  for (const [, d] of drugs) for (const inds of Object.values(d.doses)) for (const v of Object.values(inds)) if (v.seed) seeds.push(v.seed);
+  assert.deepStrictEqual(I.SEED_PRESETS.map((p) => p.seedId).sort(), seeds.map((s) => s.id).sort());
+  assert.strictEqual(new Set(seeds.map((s) => s.order)).size, seeds.length, 'seed.order repetido');
+});
+
+test('Crises: modo pediátrico abaixo de 40 kg', () => {
+  const C = load('crises.js', 'CrisesCalc');
+  assert.strictEqual(C.adrenalineArrest(70).mg, D.adre.doses.crisis.arrest.dose);
+  assert.strictEqual(C.adrenalineArrest(10).mg, 0.1);
+  assert.strictEqual(C.adrenalineArrest(10).ml, 1);
+  assert.strictEqual(C.maxAmiodarone(10), 3);
+  assert.strictEqual(C.maxAmiodarone(70), 2);
+  assert.strictEqual(C.nextAmiodarone(0, 10), '50 mg');
+  assert.strictEqual(C.nextAmiodarone(1, 70), `${D.amio.doses.crisis.arrest.second} mg`);
+  assert.strictEqual(C.hemorrhage(10).bloodVolume, 800);
+});
+
+test('Sugamadex pediátrico: só ≥ 2 anos e sem 16 mg/kg', () => {
+  assert.ok(!D.sug.doses.peds.immediate);
+  for (const v of Object.values(D.sug.doses.peds)) assert.strictEqual(v.minMonths, 24);
 });

@@ -228,7 +228,9 @@
       pr('mid', 'iot') +
       row({ name: `${D.roc.name} (sequência rápida)`, perKg: D.roc.doses.peds.rsi.perKg, unit: 'mg', conc: D.roc.conc, concText: D.roc.concText }, kg) +
       row({ name: D.sux.name, perKg: sx.perKg, unit: 'mg', max: sx.max, conc: D.sux.conc, concText: D.sux.concText, note: months < 12 ? `Lactente: ${nf(sx.perKg)} mg/kg.` : 'Criança: 1–1,5 mg/kg.' }, kg) +
-      row({ name: `${D.sug.name} (reversão imediata)`, perKg: sg.immediate.perKg, unit: 'mg', conc: D.sug.conc, concText: D.sug.concText, note: `Rotina ${nf(sg.routine.perKg)} mg/kg (TOF ≥ 2), profundo ${nf(sg.deep.perKg)} mg/kg.` }, kg));
+      (months >= sg.routine.minMonths
+        ? row({ name: `${D.sug.name} (TOF ≥ 2)`, perKg: sg.routine.perKg, unit: 'mg', conc: D.sug.conc, concText: D.sug.concText, note: `Profundo (TOF 0–1): ${nf(sg.deep.perKg)} mg/kg. Reversão imediata (16 mg/kg) não estudada em criança.` }, kg)
+        : `<div class="dose-row"><span class="dose-label">${D.sug.name}<br><small>Não aprovado &lt; 2 anos (bula). Avaliar risco–benefício ou usar neostigmina.</small></span></div>`));
 
     html += card('PCR e arritmias', 'var(--red)', 'PALS 2020',
       row({ name: `${D.adre.name} EV/IO`, perKg: ad.arrest.perKg, unit: 'mg', max: ad.arrest.max, conc: ad.arrest.conc, concText: `${nf(ad.arrest.conc)} mg/mL (${ad.arrest.prep})`, note: 'A cada 3–5 min.' }, kg) +
@@ -242,10 +244,11 @@
         ? row({ name: 'Bicarbonato 4,2% (8,4% diluído 1:1)', perKg: bc.perKg, unit: 'mEq', max: bc.max, conc: bc.neonateConc, concText: `${nf(bc.neonateConc)} mEq/mL`, note: `<b>&lt; ${bc.neonateMonths} meses: usar 4,2% — volume é o dobro do 8,4%.</b>` }, kg)
         : row({ name: 'Bicarbonato 8,4%', perKg: bc.perKg, unit: 'mEq', max: bc.max, conc: D.bicarb.conc, concText: D.bicarb.concText }, kg)) +
       row({ name: D.calGluc.name, perKg: ca.perKg, unit: 'mg', max: ca.max, conc: D.calGluc.conc, concText: D.calGluc.concText }, kg) +
-      row({ name: 'Glicose 10% (hipoglicemia)', perKg: months < 1 ? 2 : 5, unit: 'mL', note: months < 1 ? 'Neonato: 2 mL/kg.' : '5 mL/kg = 0,5 g/kg.' }, kg));
+      (() => { const G = D.glucose, g = G.doses.peds[months < 1 ? 'hypoNeonate' : 'hypo'], c10 = G.concs[1].conc, mlKg = g.perKg / c10;
+        return row({ name: 'Glicose 10% (hipoglicemia)', perKg: mlKg, unit: 'mL', note: months < 1 ? `Neonato: ${nf(mlKg)} mL/kg.` : `${nf(mlKg)} mL/kg = ${nf(g.perKg)} g/kg.` }, kg); })());
 
     html += card('Emergências', 'var(--orange)', '',
-      row({ name: 'Cristaloide (bolus)', perKg: [10, 20], unit: 'mL', note: 'Reavaliar após cada bolus.' }, kg) +
+      row({ name: 'Cristaloide (bolus)', perKg: D.crystalloid.doses.peds.bolus.perKg, unit: 'mL', note: 'Reavaliar após cada bolus.' }, kg) +
       row({ name: `${D.adre.name} IM (anafilaxia)`, perKg: ad.anaphylaxisIM.perKg, unit: 'mg', max: ad.anaphylaxisIM.max, conc: D.adre.conc, concText: `${D.adre.concText}, sem diluir` }, kg) +
       pr('mid', 'seizure', { name: 'Midazolam IM/intranasal (convulsão)' }) +
       pr('diazepam', 'seizure', { name: 'Diazepam EV (convulsão)' }) +

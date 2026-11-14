@@ -247,13 +247,16 @@
    * @type {Array<Object>}
    */
   const Drugs = root.Drugs || (typeof require === 'function' ? require('./drugs.js') : null);
-  /** [drug key, circumstance, indication] of each ready-made infusion, in display order. */
-  const SEED_SOURCES = [
-    ['nora', 'adult', 'infusion'], ['dopa', 'adult', 'infusion'], ['dobut', 'adult', 'infusion'],
-    ['adre', 'adult', 'infusion'], ['tridil', 'adult', 'infusion'], ['nipride', 'adult', 'infusion'],
-    ['dex', 'adult', 'infusion'], ['pro', 'adult', 'infusion'], ['mid', 'adult', 'infusion'],
-    ['fen', 'adult', 'infusionFixed'], ['remi', 'adult', 'infusion'], ['cet', 'adult', 'infusion'],
-  ];
+  /** Every infusion in drugs.js that has a `seed`, in `seed.order`. */
+  const SEED_SOURCES = [];
+  for (const k of Object.keys(Drugs)) {
+    const d = Drugs[k];
+    if (!d || !d.doses) continue;
+    for (const ctx of Object.keys(d.doses)) {
+      for (const ind of Object.keys(d.doses[ctx])) if (d.doses[ctx][ind].seed) SEED_SOURCES.push([k, ctx, ind]);
+    }
+  }
+  SEED_SOURCES.sort((a, b) => Drugs[a[0]].doses[a[1]][a[2]].seed.order - Drugs[b[0]].doses[b[1]][b[2]].seed.order);
   const SEED_PRESETS = SEED_SOURCES.map(([k, ctx, ind]) => {
     const inf = Drugs[k].doses[ctx][ind], sd = inf.seed;
     const parts = inf.rateUnit.split('/'), mass = parts[0], per = parts[parts.length - 1]; // 'mcg/kg/min' → mcg, min

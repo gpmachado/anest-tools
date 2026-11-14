@@ -1,38 +1,53 @@
 /**
- * @file Single source of drug data shared by several tabs (IOT, Adjuvantes,
- * Ped, Crises). Presentations, concentrations, per-kg doses, ceilings, the
- * weight each dose uses and the source.
+ * @file Single source of the app's drug data: presentations, concentrations,
+ * doses by circumstance, ceilings, the weight each dose uses, standard
+ * dilutions, infusion tables and the source. Every tab reads its numbers here;
+ * texts and protocol notes stay in each tab.
  *
- * Change a dose or a presentation HERE and every tab that shows it follows.
- * Texts and notes stay in each tab; only the numbers come from this file.
+ * HOW TO EDIT
+ *  1. Change the number here (never in the tab). Update `source` and `reviewed`.
+ *  2. Run `node --test` (shape, units, dilutions, every entry used) and open
+ *     index.html?teste (render checks in the console).
+ *  3. Bump CACHE in sw.js so installed apps download the new version.
  *
- * Shape: ONE entry per drug (presentation and concentration are a single fact),
- * with the doses grouped by circumstance:
- *   doses.adult  — adult anesthesia tabs (IOT, Adjuvantes)
- *   doses.peds   — Ped tab (always the child's weight)
- *   doses.crisis — Crises tab (cardiac arrest, anaphylaxis, MH, hyperkalemia…)
- * Inside each circumstance, one key per indication (iot, rsi, arrest…).
+ * SHAPE — one entry per drug (presentation/concentration are a single fact):
+ *   doses.adult  — adult tabs (IOT, Sedação, Adjuvantes, An.Local, Vasoativos)
+ *   doses.peds   — Ped tab and pediatric mode of Crises (child's weight)
+ *   doses.crisis — Crises tab and PCR cards (adult)
+ *   Inside each circumstance, one key per indication (iot, rsi, arrest, hyperK…).
  *
- * Each indication is a BOLUS (default) or an INFUSION:
- *   bolus:    { perKg | dose | perKgMin/perKgMax, weight?, max? }      (dose de ataque)
- *   infusion: { kind: 'infusion', rate | rateMin/rateMax, rateUnit,    (manutenção)
- *               weight?, duration?, prep? }
- *     rateUnit: 'mcg/kg/min' | 'mg/kg/h' | 'mg/min' | 'mg/h' | 'mg/24h'…
- *     prep: standard dilution text; `prepConc` its concentration (unit/mL).
- *   A drug with loading + maintenance has two keys, e.g. `loading` and `infusion`;
- *   a phased infusion uses an array of steps (see amiodarona pós-RCE).
- *   `table`: rows shown in the tab's mL/h table, [{ rate, effect }].
- *   `seed`: this infusion is a ready-made preset of the Infusão tab
- *     ({ id, name, amount, amountUnit, volumeMl } = the standard dilution).
- * Bolus extras: `label` (row text), `dec` / `decMl` (decimals shown), `max` (ceiling).
- * Local anesthetics: `doses.adult.max` = [{ label, perKg, max, vaso }], `concs` = [{ label, conc }].
+ * DRUG FIELDS
+ *   name, unit ('mg'|'mcg'|'mEq'|'U'|'g'|'mL'), conc (unit/mL), concText, pres,
+ *   doses, source, reviewed (YYYY-MM)
+ *   amp / powder   two presentations of the same drug ({ conc, concText, pres })
+ *   diluted        usual bolus dilution ({ conc, prep })
+ *   concs          available concentrations ([{ label, conc }]) — local anesthetics, glucose
+ *   vialMg / vialWaterMl   vial content and reconstitution (dantrolene)
  *
- * Conventions:
- *  - `conc` is in `unit` per mL (mg/mL, mEq/mL, mcg/mL).
- *  - `weight` is the panel weight type: 'TBW' (actual), 'IBW' (ideal),
- *    'LBW' (lean), 'ABW' (adjusted). Pediatric doses always use the child's weight.
- *  - `max` is an absolute ceiling in `unit`.
- *  - Every drug has `source` and `reviewed` (YYYY-MM): update both when you change it.
+ * BOLUS INDICATION (default)
+ *   perKg          number, or [min, max] for a range
+ *   perKgList      several per-kg rows ([0.1, 0.2, 0.3])
+ *   perKgMin/perKgMax  range with its own min/max (atropine)
+ *   dose | doseMin/doseMax   fixed dose in `unit`
+ *   max            absolute ceiling in `unit` (always a number)
+ *   min            minimum dose; maxPerKg, maxDay, maxDoses, perDay: other ceilings/counts
+ *   weight         'TBW' | 'IBW' | 'LBW' | 'ABW' (adult only; peds = child's weight)
+ *   label, first/second, mcg/concMcg/mcgPerKg, prep, conc
+ *   minMonths, bradyMin, neonateConc/neonateMonths, fixedAbove70: special cases
+ *   limits         local anesthetics: [{ label, perKg, max, vaso }]
+ *   ceiling        lipid emulsion: { perKg }
+ *
+ * INFUSION INDICATION — { kind: 'infusion', … }
+ *   rate | rateMin/rateMax, rateUnit ('mcg/kg/min', 'mg/kg/h', 'mcg/h', 'mg/min', 'mg/24h'…)
+ *   max, weight, start, duration
+ *   prep + prepConc  standard dilution text and its concentration (rate mass unit/mL)
+ *   steps          phased infusion [{ rate, duration }]
+ *   table          rows of the tab's mL/h table [{ rate, effect }]
+ *   seed           ready-made preset of the Infusão tab:
+ *                  { order, id, name, amount, amountUnit, volumeMl } (must match prepConc)
+ *
+ * test/drugs.test.js rejects any field not listed here: add it to this list
+ * and to the test when you really need a new one.
  *
  * Exposed as `Drugs` (browser global) and as module.exports (Node tests).
  */
@@ -44,12 +59,12 @@
       name: 'Rocurônio', unit: 'mg', conc: 10, concText: '10 mg/mL', pres: 'amp 50 mg/5 mL',
       doses: {
         adult: {
-          iot: { perKg: 1, weight: 'IBW' },   // eletiva: IBW (SmPC Esmeron, obesos)
+          iot: { perKg: 1, weight: 'IBW' },   // eletiva: IBW = escolha de protocolo (bula EUA: peso real em obesos)
           rsi: { perKg: 1.2, weight: 'TBW' }, // sequência rápida: peso real (início rápido)
         },
         peds: { rsi: { perKg: 1.2 } },
       },
-      source: 'SmPC Esmeron; Meyhoff 2009; SOBA', reviewed: '2026-11',
+      source: 'Protocolo: IOT eletiva por IBW (Meyhoff 2009; SOBA). Bula EUA: 0,6 mg/kg pelo peso real em obesos. RSI 1,2 mg/kg peso real', reviewed: '2026-11',
     },
     sux: {
       name: 'Succinilcolina', unit: 'mg', conc: 10, concText: '10 mg/mL', pres: 'frasco 100 mg (reconstituir p/ 10 mg/mL)',
@@ -67,9 +82,9 @@
           deep: { perKg: 4, weight: 'TBW' },       // TOF 0–1, PTC ≥ 1–2
           immediate: { perKg: 16, weight: 'TBW' }, // 3 min após Roc 1,2 mg/kg
         },
-        peds: { routine: { perKg: 2 }, deep: { perKg: 4 }, immediate: { perKg: 16 } },
+        peds: { routine: { perKg: 2, minMonths: 24 }, deep: { perKg: 4, minMonths: 24 } }, // sem 16 mg/kg: não estudado em criança
       },
-      source: 'Bula Bridion (FDA/EMA): peso corporal real', reviewed: '2026-11',
+      source: 'Bula Bridion (FDA/EMA): peso corporal real; pediatria ≥ 2 anos só 2 e 4 mg/kg', reviewed: '2026-11',
     },
     atro: {
       name: 'Atropina', unit: 'mg', conc: 0.5, concText: '0,5 mg/mL', pres: 'amp 0,5 mg/1 mL',
@@ -93,7 +108,7 @@
               { rate: 0.05, effect: 'Baixa' }, { rate: 0.1, effect: 'Baixa' }, { rate: 0.3, effect: 'Moderada' },
               { rate: 0.5, effect: 'Moderada' }, { rate: 1.0, effect: 'Alta' }, { rate: 2.0, effect: 'Alta' },
             ],
-            seed: { id: 'adrenalina', name: 'Adrenalina', amount: 12, amountUnit: 'mg', volumeMl: 200 } },
+            seed: { order: 4, id: 'adrenalina', name: 'Adrenalina', amount: 12, amountUnit: 'mg', volumeMl: 200 } },
         },
         crisis: {
           arrest: { dose: 1 },
@@ -106,6 +121,7 @@
         peds: {
           arrest: { perKg: 0.01, max: 1, conc: 0.1, prep: '1 mL + 9 mL SF' },
           anaphylaxisIM: { perKg: 0.01, max: 0.5 },
+          anaphylaxisIV: { mcgPerKg: 1 },                        // titulado, por quem tem experiência (RCUK)
         },
       },
       source: 'AHA 2020; RCUK 2021', reviewed: '2026-11',
@@ -119,7 +135,7 @@
             { rate: 1, duration: '6 h' }, { rate: 0.5, duration: '18 h' },
           ] },
         },
-        peds: { arrest: { perKg: 5, max: 300 } },
+        peds: { arrest: { perKg: 5, max: 300, maxDoses: 3 } },
       },
       source: 'AHA 2020; PALS', reviewed: '2026-11',
     },
@@ -127,15 +143,18 @@
       name: 'Bicarbonato de sódio 8,4%', unit: 'mEq', conc: 1, concText: '1 mEq/mL', pres: '8,4%',
       doses: {
         crisis: { arrest: { perKg: 1, weight: 'TBW' }, hyperK: { dose: 50 } },
-        peds: { arrest: { perKg: 1, max: 50, neonateConc: 0.5, neonateMonths: 3 } }, // < 3 meses: 4,2%
+        peds: {
+          arrest: { perKg: 1, max: 50, neonateConc: 0.5, neonateMonths: 3 }, // < 3 meses: 4,2%
+          hyperK: { perKg: 1, max: 50 },
+        },
       },
       source: 'AHA 2020; PALS', reviewed: '2026-11',
     },
     calGluc: {
       name: 'Gluconato de cálcio 10%', unit: 'mg', conc: 100, concText: '100 mg/mL', pres: '10%',
       doses: {
-        crisis: { hyperK: { dose: 3000 } },        // 30 mL
-        peds: { hyperK: { perKg: 60, max: 3000 } }, // 0,6 mL/kg
+        crisis: { hyperK: { dose: 3000 }, hemorrhage: { dose: 3000 } },               // 30 mL
+        peds: { hyperK: { perKg: 60, max: 3000 }, hemorrhage: { perKg: 60, max: 3000 } }, // 0,6 mL/kg
       },
       source: 'UK Kidney Association 2023; PALS', reviewed: '2026-11',
     },
@@ -143,10 +162,16 @@
       name: 'Hidrocortisona', unit: 'mg',
       amp: { conc: 50, concText: '50 mg/mL', pres: 'amp 100 mg/2 mL' },
       powder: { conc: 250, concText: '250 mg/mL', pres: 'pó 500 mg em 2 mL' },
-      doses: { adult: {
-        anaphylaxis: { min: 200, max: 500 },
-        sepsis: { kind: 'infusion', rate: 200, rateUnit: 'mg/24h', prep: '200 mg em 48 mL SF', prepConc: 4 },
-      } },
+      doses: {
+        adult: {
+          stress: { doseMin: 50, doseMax: 100 },                       // periop., repetir 8/8 h
+          anaphylaxis: { doseMin: 200, doseMax: 500 },
+          adrenal: { perDay: 200 },                                     // = 50 mg 6/6 h
+          antiInflammatory: { perKg: [1, 5], max: 500, weight: 'TBW' },
+          sepsis: { kind: 'infusion', rate: 200, rateUnit: 'mg/24h', prep: '200 mg (2 mL) + 48 mL SF = 50 mL', prepConc: 4 },
+        },
+        crisis: { anaphylaxis: { dose: 200 } },                         // após estabilizar
+      },
       source: 'Bula; RCUK 2021', reviewed: '2026-11',
     },
     dant: {
@@ -171,7 +196,7 @@
           infusionFixed: { kind: 'infusion', rateMin: 25, rateMax: 200, rateUnit: 'mcg/h', max: 200, weight: 'LBW',
             prep: '5 amp (500mcg) + 90ml SF', prepConc: 5,
             table: [{ rate: 25, effect: 'Leve' }, { rate: 50, effect: 'Mod.' }, { rate: 100, effect: 'Analgesia' }, { rate: 150, effect: 'Intens.' }, { rate: 200, effect: 'Máx' }],
-            seed: { id: 'fentanil', name: 'Fentanil', amount: 500, amountUnit: 'mcg', volumeMl: 100 } },
+            seed: { order: 10, id: 'fentanil', name: 'Fentanil', amount: 500, amountUnit: 'mcg', volumeMl: 100 } },
         },
         peds: { iot: { perKg: [1, 2], max: 100 } },
       },
@@ -186,7 +211,7 @@
           infusion: { kind: 'infusion', rateMin: 0.05, rateMax: 0.3, rateUnit: 'mcg/kg/min', weight: 'LBW',
             prep: '2 mg + 38 ml SF', prepConc: 50,
             table: [{ rate: 0.05, effect: 'Sedação / TIVA leve' }, { rate: 0.1, effect: 'Analgesia intraop.' }, { rate: 0.2, effect: 'Estímulo intenso' }, { rate: 0.3, effect: 'Estímulo máx.' }],
-            seed: { id: 'remifentanil', name: 'Remifentanil', amount: 2, amountUnit: 'mg', volumeMl: 40 } },
+            seed: { order: 11, id: 'remifentanil', name: 'Remifentanil', amount: 2, amountUnit: 'mg', volumeMl: 40 } },
         },
       },
       source: 'Bula Ultiva', reviewed: '2026-11',
@@ -204,7 +229,7 @@
           iot: { perKg: [1, 2], weight: 'TBW' },
           infusion: { kind: 'infusion', rateUnit: 'mg/kg/h', weight: 'TBW', prep: '2ml (100mg) + 8ml SF', prepConc: 10,
             table: [{ rate: 0.1, effect: 'Analgesia mín' }, { rate: 0.3, effect: 'Analgesia mod.' }, { rate: 0.5, effect: 'Analgesia máx' }, { rate: 1.0, effect: 'Sedação leve' }, { rate: 2.0, effect: 'Sedação profunda' }],
-            seed: { id: 'cetamina', name: 'Cetamina', amount: 100, amountUnit: 'mg', volumeMl: 10 } },
+            seed: { order: 12, id: 'cetamina', name: 'Cetamina', amount: 100, amountUnit: 'mg', volumeMl: 10 } },
         },
         peds: { iot: { perKg: [1, 2] } },
       },
@@ -219,7 +244,7 @@
           infusion: { kind: 'infusion', rateMin: 0.02, rateMax: 0.1, max: 0.1, rateUnit: 'mg/kg/h', weight: 'IBW',
             prep: '15mg (3ml de 5mg/ml) + 12ml SF', prepConc: 1,
             table: [{ rate: 0.02, effect: 'Sedação mín' }, { rate: 0.05, effect: 'Sedação mod.' }, { rate: 0.07, effect: 'Sedação prof.' }, { rate: 0.10, effect: 'Dose máx' }],
-            seed: { id: 'midazolam', name: 'Midazolam', amount: 15, amountUnit: 'mg', volumeMl: 15 } },
+            seed: { order: 9, id: 'midazolam', name: 'Midazolam', amount: 15, amountUnit: 'mg', volumeMl: 15 } },
         },
         peds: { iot: { perKg: [0.1, 0.2], max: 5 }, seizure: { perKg: 0.2, max: 10 } },
       },
@@ -233,7 +258,7 @@
           infusion: { kind: 'infusion', rateMin: 0.5, rateMax: 4, max: 4, rateUnit: 'mg/kg/h', weight: 'LBW',
             prep: 'sem diluição', prepConc: 10,
             table: [{ rate: 0.5, effect: 'Sedação leve' }, { rate: 1.0, effect: 'Sedação mod.' }, { rate: 2.0, effect: 'Sedação prof.' }, { rate: 3.0, effect: 'Anestesia' }, { rate: 4.0, effect: 'Dose máx' }],
-            seed: { id: 'propofol', name: 'Propofol 10 mg/mL', amount: 500, amountUnit: 'mg', volumeMl: 50 } },
+            seed: { order: 8, id: 'propofol', name: 'Propofol 10 mg/mL', amount: 500, amountUnit: 'mg', volumeMl: 50 } },
         },
         peds: { iot: { perKg: [2, 3] } },
       },
@@ -247,10 +272,10 @@
           infusion: { kind: 'infusion', rateMin: 0.2, rateMax: 1.4, max: 1.4, rateUnit: 'mcg/kg/h', weight: 'IBW',
             prep: '2ml + 48ml SF', prepConc: 4,
             table: [{ rate: 0.2, effect: 'Mín sedação' }, { rate: 0.4, effect: 'Sedação leve' }, { rate: 0.7, effect: 'Sedação mod.' }, { rate: 1.0, effect: 'Sedação prof.' }, { rate: 1.4, effect: 'Dose máx' }],
-            seed: { id: 'dexmedetomidina', name: 'Dexmedetomidina', amount: 200, amountUnit: 'mcg', volumeMl: 50 } },
+            seed: { order: 7, id: 'dexmedetomidina', name: 'Dexmedetomidina', amount: 200, amountUnit: 'mcg', volumeMl: 50 } },
         },
       },
-      source: 'Bula Precedex', reviewed: '2026-11',
+      source: 'Protocolo institucional (até 1,4 mcg/kg/h); bula Precedex: 0,2–0,7 mcg/kg/h na UTI', reviewed: '2026-11',
     },
 
     /* ── Adjuvantes ── */
@@ -327,10 +352,10 @@
 
     /* ── Anestésicos locais (tetos usados nos cards e na soma de misturas) ── */
     lido: {
-      name: 'Lidocaína', unit: 'mg', conc: 20, concText: '2% = 20 mg/mL', pres: 'amp 2% 20 mL = 400 mg',
+      name: 'Lidocaína', unit: 'mg', conc: 20, concText: '2% = 20 mg/mL', pres: 'amp 2% = 20 mg/ml (20 ml = 400 mg)',
       concs: [{ label: '0,5%', conc: 5 }, { label: '1%', conc: 10 }, { label: '2%', conc: 20 }],
       doses: {
-        adult: { max: [
+        adult: { limits: [
           { label: 'Sem vasoconstritor', perKg: 4.5, max: 300, vaso: false },
           { label: 'Com vasoconstritor (epi 1:200.000)', perKg: 7, max: 500, vaso: true },
         ] },
@@ -339,24 +364,24 @@
       source: 'Bula; ASRA', reviewed: '2026-11',
     },
     bupi: {
-      name: 'Bupivacaína', unit: 'mg',
+      name: 'Bupivacaína', unit: 'mg', pres: 'amp 0,5% = 5 mg/ml (20 ml = 100 mg)',
       concs: [{ label: '0,25%', conc: 2.5 }, { label: '0,5%', conc: 5 }, { label: '0,75%', conc: 7.5 }],
-      doses: { adult: { max: [
+      doses: { adult: { limits: [
         { label: 'Sem vasoconstritor', perKg: 2, max: 150, vaso: false },
         { label: 'Com vasoconstritor (epi 1:200.000)', perKg: 2.5, max: 200, vaso: true },
       ] } },
       source: 'Teto conservador (bula: 175/225 mg)', reviewed: '2026-11',
     },
     levo: {
-      name: 'Levobupivacaína', unit: 'mg',
+      name: 'Levobupivacaína', unit: 'mg', pres: 'amp 0,5% = 5 mg/ml (10 ml = 50 mg / 20 ml = 100 mg)',
       concs: [{ label: '0,25%', conc: 2.5 }, { label: '0,5%', conc: 5 }, { label: '0,75%', conc: 7.5 }],
-      doses: { adult: { max: [{ label: 'Dose máxima', perKg: 2, max: 150, vaso: false }] } },
+      doses: { adult: { limits: [{ label: 'Dose máxima', perKg: 2, max: 150, vaso: false }] } },
       source: 'Bula', reviewed: '2026-11',
     },
     ropi: {
-      name: 'Ropivacaína', unit: 'mg',
+      name: 'Ropivacaína', unit: 'mg', pres: 'amp 0,75% = 7,5 mg/ml (10 ml = 75 mg / 20 ml = 150 mg)',
       concs: [{ label: '0,2%', conc: 2 }, { label: '0,5%', conc: 5 }, { label: '0,75%', conc: 7.5 }, { label: '1%', conc: 10 }],
-      doses: { adult: { max: [{ label: 'Dose máxima', perKg: 3, max: 250, vaso: false }] } },
+      doses: { adult: { limits: [{ label: 'Dose máxima', perKg: 3, max: 250, vaso: false }] } },
       source: 'Teto conservador (bula: 300 mg)', reviewed: '2026-11',
     },
     lipid: {
@@ -364,7 +389,7 @@
       doses: { crisis: {
         bolus: { perKg: 1.5, fixedAbove70: 100 },                              // 100 mL se > 70 kg
         infusion: { kind: 'infusion', rate: 0.25, rateUnit: 'mL/kg/min', weight: 'TBW', fixedAbove70: '200–250 ml em 15–20min' },
-        max: { perKg: 12 },
+        ceiling: { perKg: 12 },
       } },
       source: 'ASRA 2020 (LAST)', reviewed: '2026-11',
     },
@@ -375,7 +400,7 @@
       doses: { adult: { infusion: { kind: 'infusion', rateMin: 0.01, rateMax: 0.5, max: 0.5, rateUnit: 'mcg/kg/min', weight: 'TBW',
         start: '0,05–0,1', prep: '4ml + 196ml SF', prepConc: 20,
         table: [{ rate: 0.05, effect: 'Início' }, { rate: 0.1, effect: 'Início' }, { rate: 0.15, effect: 'Manutenção' }, { rate: 0.2, effect: 'Manutenção' }, { rate: 0.3, effect: 'Alta dose' }],
-        seed: { id: 'noradrenalina', name: 'Noradrenalina', amount: 4, amountUnit: 'mg', volumeMl: 200 } } } },
+        seed: { order: 1, id: 'noradrenalina', name: 'Noradrenalina', amount: 4, amountUnit: 'mg', volumeMl: 200 } } } },
       source: 'Surviving Sepsis 2021', reviewed: '2026-11',
     },
     dopa: {
@@ -383,7 +408,7 @@
       doses: { adult: { infusion: { kind: 'infusion', rateMin: 2, rateMax: 20, max: 20, rateUnit: 'mcg/kg/min', weight: 'TBW',
         prep: '5 amp (50mg/10ml) + 200ml SF', prepConc: 1000,
         table: [{ rate: 2, effect: 'Dopaminérgico' }, { rate: 5, effect: 'β¹ inotrópico' }, { rate: 10, effect: 'β¹ inotrópico' }, { rate: 15, effect: 'α vasopressor' }, { rate: 20, effect: 'α vasopressor' }],
-        seed: { id: 'dopamina', name: 'Dopamina', amount: 250, amountUnit: 'mg', volumeMl: 250 } } } },
+        seed: { order: 2, id: 'dopamina', name: 'Dopamina', amount: 250, amountUnit: 'mg', volumeMl: 250 } } } },
       source: 'Bula', reviewed: '2026-11',
     },
     dobut: {
@@ -391,7 +416,7 @@
       doses: { adult: { infusion: { kind: 'infusion', rateMin: 2, rateMax: 20, max: 50, rateUnit: 'mcg/kg/min', weight: 'TBW',
         prep: '1 amp + 230ml SF', prepConc: 1000,
         table: [{ rate: 2, effect: 'Inotrópico' }, { rate: 5, effect: 'Inotrópico' }, { rate: 10, effect: '↑DC moderado' }, { rate: 15, effect: 'Alto débito' }, { rate: 20, effect: 'Alto débito' }],
-        seed: { id: 'dobutamina', name: 'Dobutamina', amount: 250, amountUnit: 'mg', volumeMl: 250 } } } },
+        seed: { order: 3, id: 'dobutamina', name: 'Dobutamina', amount: 250, amountUnit: 'mg', volumeMl: 250 } } } },
       source: 'Bula', reviewed: '2026-11',
     },
     tridil: {
@@ -399,7 +424,7 @@
       doses: { adult: { infusion: { kind: 'infusion', rateMin: 5, rateMax: 200, max: 200, rateUnit: 'mcg/min',
         prep: '50mg (10ml) + 240ml SG5%', prepConc: 200,
         table: [{ rate: 5, effect: 'Angioplast.' }, { rate: 10, effect: 'Angioplast.' }, { rate: 20, effect: 'Angioplast.' }, { rate: 40, effect: 'Angina/HAS' }, { rate: 60, effect: 'Angina/HAS' }, { rate: 100, effect: 'Emergência' }, { rate: 200, effect: 'Emergência' }],
-        seed: { id: 'tridil', name: 'Tridil (nitroglicerina)', amount: 50, amountUnit: 'mg', volumeMl: 250 } } } },
+        seed: { order: 5, id: 'tridil', name: 'Tridil (nitroglicerina)', amount: 50, amountUnit: 'mg', volumeMl: 250 } } } },
       source: 'Bula', reviewed: '2026-11',
     },
     nipride: {
@@ -407,7 +432,7 @@
       doses: { adult: { infusion: { kind: 'infusion', rateMin: 0.3, rateMax: 10, max: 10, rateUnit: 'mcg/kg/min', weight: 'TBW',
         prep: '50mg + 245ml SG5%', prepConc: 200,
         table: [{ rate: 0.3, effect: 'Mín' }, { rate: 0.5, effect: 'Mín' }, { rate: 1.0, effect: 'Moderado' }, { rate: 2.0, effect: 'Moderado' }, { rate: 3.0, effect: 'Alto' }, { rate: 5.0, effect: 'Alto' }, { rate: 8.0, effect: 'Máx (cianeto!)' }, { rate: 10.0, effect: 'Máx (cianeto!)' }],
-        seed: { id: 'nipride', name: 'Nipride (nitroprussiato)', amount: 50, amountUnit: 'mg', volumeMl: 250 } } } },
+        seed: { order: 6, id: 'nipride', name: 'Nipride (nitroprussiato)', amount: 50, amountUnit: 'mg', volumeMl: 250 } } } },
       source: 'Bula', reviewed: '2026-11',
     },
 
@@ -441,6 +466,48 @@
       name: 'Naloxona', unit: 'mg', conc: 0.4, concText: '0,4 mg/mL',
       doses: { peds: { full: { perKg: 0.1, max: 2 } } },
       source: 'PALS', reviewed: '2026-11',
+    },
+    /* ── Adjuvantes de crise ── */
+    insulin: {
+      name: 'Insulina regular', unit: 'U',
+      doses: { crisis: { hyperK: { dose: 10 } }, peds: { hyperK: { perKg: 0.1, max: 10 } } },
+      source: 'UK Kidney Association 2023; PALS', reviewed: '2026-11',
+    },
+    glucose: {
+      name: 'Glicose', unit: 'g', concs: [{ label: '50%', conc: 0.5 }, { label: '10%', conc: 0.1 }],
+      doses: {
+        crisis: { hyperK: { dose: 25 } },                                    // com a insulina
+        peds: { hyperK: { perKg: 0.5, max: 25 }, hypoNeonate: { perKg: 0.2 }, hypo: { perKg: 0.5 } }, // G10% 2 / 5 mL/kg
+      },
+      source: 'UK Kidney Association 2023; PALS', reviewed: '2026-11',
+    },
+    salbutamol: {
+      name: 'Salbutamol inalatório', unit: 'mg',
+      doses: { crisis: { hyperK: { doseMin: 10, doseMax: 20 } } },
+      source: 'UK Kidney Association 2023', reviewed: '2026-11',
+    },
+    glucagon: {
+      name: 'Glucagon', unit: 'mg',
+      doses: { crisis: { anaphylaxis: { doseMin: 1, doseMax: 2 } } },   // se em uso de β-bloqueador
+      source: 'RCUK 2021', reviewed: '2026-11',
+    },
+    caCl: {
+      name: 'Cloreto de cálcio 10%', unit: 'mg', conc: 100, concText: '100 mg/mL',
+      doses: { crisis: { hyperK: { dose: 1000 }, hemorrhage: { dose: 1000 } } }, // 10 mL, acesso central
+      source: 'UK Kidney Association 2023; ESAIC 2022', reviewed: '2026-11',
+    },
+    txa: {
+      name: 'Ácido tranexâmico', unit: 'mg', conc: 50, concText: '50 mg/mL',
+      doses: {
+        crisis: { loading: { dose: 1000 }, infusion: { kind: 'infusion', rate: 1000, rateUnit: 'mg/8h' } },
+        peds: { loading: { perKg: 15, max: 1000 }, infusion: { kind: 'infusion', rate: 2, rateUnit: 'mg/kg/h' } },
+      },
+      source: 'CRASH-2; RCPCH/PED-TRAX', reviewed: '2026-11',
+    },
+    crystalloid: {
+      name: 'Cristaloide', unit: 'mL',
+      doses: { crisis: { bolus: { perKg: [10, 20] } }, peds: { bolus: { perKg: [10, 20] } } },
+      source: 'RCUK 2021; PALS', reviewed: '2026-11',
     },
     flumazenil: {
       name: 'Flumazenil', unit: 'mg', conc: 0.1, concText: '0,1 mg/mL',

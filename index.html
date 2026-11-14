@@ -1321,8 +1321,9 @@ function renderIOT() {
       badges:[{t:'Broncodilatador',c:'bg'},{t:'Hipotensão importante',c:'br'}],
     }})(),
     (() => { const R = D.roc, S = D.sug, iot = R.doses.adult.iot, rsi = R.doses.adult.rsi, imm = S.doses.adult.immediate;
-      const wt = mk(iot.weight), wr = mk(rsi.weight), ws = mk(imm.weight), obese = wt < wr;
-      const wl = w => obese ? (w === 'IBW' ? ' (IBW)' : w === 'TBW' ? ' (peso real)' : ` (${w})`) : '';
+      const wt = mk(iot.weight), wr = mk(rsi.weight), ws = mk(imm.weight), differ = wt < wr;
+      const obese = weights.ibw > 0 && weights.tbw > weights.ibw * 1.2; // > 120% do IBW
+      const wl = w => differ ? (w === 'IBW' ? ' (IBW)' : w === 'TBW' ? ' (peso real)' : ` (${w})`) : '';
       return {
       id:'roc', wtype:iot.weight, name:R.name, color:'var(--green)',
       sub:'BNM não-despolarizante — duração longa', conc:`${R.concText} (${R.pres})`, hasModes:false,
@@ -1562,12 +1563,12 @@ function renderAdj() {
         (() => { const wt = wByType('TBW'); return {
           id:'hcort', wtype:'TBW', name:'Hidrocortisona', color:'var(--yellow)',
           sub:'Corticoide — choque, insuf. adrenal, anafilaxia', conc:`${D.hcort.amp.pres} ou ${D.hcort.powder.pres}`, hasModes:false,
-          iotRows:(() => { const H = D.hcort, A = H.amp, P = H.powder, an = H.doses.adult.anaphylaxis; return [
-            {l:'Dose de estresse periop.', v:'50–100 mg', u:'IV bolus (repetir 8/8h)'},
-            {l:`Choque anafilático  ${an.min}–${an.max}mg — ${A.pres}`, v:`${nf(an.min/A.conc)}–${nf(an.max/A.conc)} ml`, u:`(${A.concText}) IV bolus`},
-            {l:`Choque anafilático  ${an.min}–${an.max}mg — ${P.pres}`, v:`${nf(an.min/P.conc)}–${nf(an.max/P.conc)} ml`, u:`(${P.concText}) IV bolus`},
-            {l:'Insuf. adrenal / sepse', v:'200 mg/dia', u:'= 50mg 6/6h ou infusão'},
-            {l:'Dose antiinflamatória  1–5 mg/kg', v:`${f(wt*1/A.conc,1)}–${f(Math.min(wt*5,500)/A.conc,1)} ml`, u:`= ${f(wt*1,0)}–${f(Math.min(wt*5,500),0)} mg (${A.concText})`},
+          iotRows:(() => { const H = D.hcort, A = H.amp, P = H.powder, a = H.doses.adult, an = a.anaphylaxis, st = a.stress, ai = a.antiInflammatory, [lo, hi] = rng(ai.perKg), wa = wByType(ai.weight); return [
+            {l:'Dose de estresse periop.', v:`${st.doseMin}–${st.doseMax} mg`, u:'IV bolus (repetir 8/8h)'},
+            {l:`Choque anafilático  ${an.doseMin}–${an.doseMax}mg — ${A.pres}`, v:`${nf(an.doseMin/A.conc)}–${nf(an.doseMax/A.conc)} ml`, u:`(${A.concText}) IV bolus`},
+            {l:`Choque anafilático  ${an.doseMin}–${an.doseMax}mg — ${P.pres}`, v:`${nf(an.doseMin/P.conc)}–${nf(an.doseMax/P.conc)} ml`, u:`(${P.concText}) IV bolus`},
+            {l:'Insuf. adrenal / sepse', v:`${a.adrenal.perDay} mg/dia`, u:`= ${a.adrenal.perDay/4}mg 6/6h ou infusão`},
+            {l:`Dose antiinflamatória  ${nf(lo)}–${nf(hi)} mg/kg`, v:`${f(wa*lo/A.conc,1)}–${f(Math.min(wa*hi,ai.max)/A.conc,1)} ml`, u:`= ${f(wa*lo,0)}–${f(Math.min(wa*hi,ai.max),0)} mg (${A.concText})`},
           ]; })(),
           iotNote:`Volumes em ml calculados para ${D.hcort.amp.concText} (${D.hcort.amp.pres}). <strong>${D.hcort.powder.pres.replace(/^./, c => c.toUpperCase())} =${D.hcort.powder.concText} (÷${D.hcort.powder.conc/D.hcort.amp.conc} o volume)</strong><br>
           ${(() => { const i = D.hcort.doses.adult.sepsis; return `<strong>Infusão contínua sepse: ${i.prep} (${i.prepConc}mg/ml) → ${i.rate}${i.rateUnit.replace('mg','mg')} ≈ ${f(i.rate/24/i.prepConc,0)} ml/h</strong>`; })()}`,
@@ -1591,7 +1592,7 @@ function renderAdj() {
 /* Doses máximas de anestésico local — usadas nos cards e na soma de misturas */
 const LA_MAX = Object.fromEntries(['lido', 'bupi', 'levo', 'ropi'].map(k => [k, {
   name: D[k].name,
-  doses: D[k].doses.adult.max.map(d => ({ label: d.label, doseKg: d.perKg, absMax: d.max, vaso: d.vaso })),
+  doses: D[k].doses.adult.limits.map(d => ({ label: d.label, doseKg: d.perKg, absMax: d.max, vaso: d.vaso })),
 }])); // dados em js/drugs.js
 const laConcs = key => D[key].concs.map(c => ({ label: c.label, mgml: c.conc }));
 const laMaxMg = (key, vaso, w) => { const ds = LA_MAX[key].doses, d = ds.find(x => x.vaso === vaso) || ds[0]; return Math.min(d.doseKg * w, d.absMax); };
@@ -1691,7 +1692,7 @@ function renderAL() {
       onset: '2–5 min', duration: '1–3 h',
       doses: LA_MAX.lido.doses,
       concs: laConcs('lido'),
-      notes: `Amp 2% = 20mg/ml (20ml = 400mg)<br>
+      notes: `${D.lido.pres.replace(/^amp /, 'Amp ')}<br>
       Raquianestesia hiperbárica: 5% c/ glicose (1,5–2ml)<br>
       Peridural: 1,5–2% | Tópico: 4–10% | Venoso (Bier): 0,5%`,
       badges: [
@@ -1707,7 +1708,7 @@ function renderAL() {
       onset: '15–30 min', duration: '4–12 h',
       doses: LA_MAX.bupi.doses,
       concs: laConcs('bupi'),
-      notes: `Amp 0,5% = 5mg/ml (20ml = 100mg)<br>
+      notes: `${D.bupi.pres.replace(/^amp /, 'Amp ')}<br>
       Raquianestesia pesada (0,5% hiperbárica): 10–15mg = 2–3ml<br>
       Raquianestesia isobárica (0,5%): 7,5–15mg<br>
       Peridural analgesia: 0,1–0,25% | Peridural bloqueio: 0,5%`,
@@ -1724,7 +1725,7 @@ function renderAL() {
       onset: '15–30 min', duration: '4–12 h',
       doses: LA_MAX.levo.doses,
       concs: laConcs('levo'),
-      notes: `Amp 0,5% = 5mg/ml (10ml = 50mg / 20ml = 100mg)<br>
+      notes: `${D.levo.pres.replace(/^amp /, 'Amp ')}<br>
       Perfil clínico similar à bupivacaína<br>
       Peridural bloqueio: 0,5–0,75% | Analgesia: 0,1–0,25%<br>
       Raquianestesia: 0,5% isobárica 10–15mg`,
@@ -1740,7 +1741,7 @@ function renderAL() {
       onset: '10–20 min', duration: '4–8 h',
       doses: LA_MAX.ropi.doses,
       concs: laConcs('ropi'),
-      notes: `Amp 0,75% = 7,5mg/ml (10ml = 75mg / 20ml = 150mg)<br>
+      notes: `${D.ropi.pres.replace(/^amp /, 'Amp ')}<br>
       Analgesia peridural/bloqueio contínuo: 0,2%<br>
       Bloqueios periféricos: 0,5–0,75% | Peridural cirúrgico: 0,75–1%<br>
       Possui leve vasoconstrição intrínseca`,
@@ -1763,7 +1764,7 @@ function renderAL() {
         ${(() => { const L = D.lipid.doses.crisis, b = L.bolus, i = L.infusion; return `
         &nbsp;&nbsp;Bolus: <strong>${w > 70 ? b.fixedAbove70+' ml' : f(w*b.perKg,0)+' ml'}</strong> (${nf(b.perKg)}ml/kg; ${b.fixedAbove70} ml se &gt;70kg) em 2–3min<br>
         &nbsp;&nbsp;Infusão: <strong>${w > 70 ? i.fixedAbove70 : f(w*i.rate,1)+' ml/min'}</strong> (${nf(i.rate)}ml/kg/min)<br>
-        &nbsp;&nbsp;Dose máx: <strong>${f(w*L.max.perKg,0)} ml</strong> (${L.max.perKg}ml/kg) · ASRA 2020`; })()}
+        &nbsp;&nbsp;Dose máx: <strong>${f(w*L.ceiling.perKg,0)} ml</strong> (${L.ceiling.perKg}ml/kg) · ASRA 2020`; })()}
       </div>
     </div>
   </div>`;
@@ -2010,7 +2011,13 @@ function buildCard(d) {
 }
 
 /* tabela de infusão a partir de drugs.js (tabela por kg e por hora) */
-const infT = (wt, inf) => infTable_wt(wt, inf.table.map(r => ({ d: r.rate, eff: r.effect, conc_mcg_ml: inf.prepConc, unit: inf.rateUnit })), inf.rateUnit);
+const infT = (wt, inf) => {
+  // mL/h = taxa × (peso, se /kg/) × (60, se /min) ÷ concentração
+  const perKg = inf.rateUnit.includes('/kg/'), perMin = inf.rateUnit.endsWith('/min');
+  if (!perMin && !inf.rateUnit.endsWith('/h')) throw new Error('infT: unidade não suportada ' + inf.rateUnit);
+  const k = (perKg ? 1 : 1 / wt) * (perMin ? 60 : 1);
+  return infTable_wt(wt, inf.table.map(r => ({ d: r.rate, eff: r.effect, conc_mcg_ml: inf.prepConc / k, unit: inf.rateUnit })), inf.rateUnit);
+};
 /* faixa por kg [mín, máx] ou valor único */
 const rng = p => Array.isArray(p) ? p : [p, p];
 
@@ -2406,6 +2413,21 @@ if (location.search.includes('teste')) {
   ok(P.dose(0.01, 20, 1) === 0.2 && P.dose(5, 70, 300) === 300, 'Adrenalina 20kg 0,2mg · amiodarona com teto 300mg');
   ok(P.vitals(60).sbpMin === 80 && P.vitals(0.5).sbpMin === 60, 'Hipotensão: 5 anos <80 · neonato <60');
   ok(P.maintenance(15) === 50 && P.lma(12) === '2', 'Ped: manutenção 15kg 50 mL/h · ML nº 2');
+  // telas: nota de obeso, modo pediátrico da Crises, sugamadex < 2 anos
+  const setW = (w, h) => { document.getElementById('weight').value = w; document.getElementById('height').value = h; update(); };
+  setW(70, 170); ok(!t('tab-iot').includes('Obeso:'), 'Rocurônio: sem nota de obeso em 70 kg / 170 cm');
+  setW(120, 170); ok(t('tab-iot').includes('Obeso:'), 'Rocurônio: nota de obeso em 120 kg / 170 cm');
+  setW(10, 75); ok(t('tab-pcr').includes('doses pediátricas') && t('tab-pcr').includes('0,1 mg') && !document.getElementById('cr-peds-banner').hidden, 'Crises 10 kg: modo pediátrico, adrenalina 0,1 mg');
+  CrisesUI.show('k'); ok(t('tab-pcr').includes('Hipercalemia — criança') && !t('tab-pcr').includes('Insulina regular 10 U'), 'Crises 10 kg: hipercalemia pediátrica, sem dose de adulto');
+  CrisesUI.show('pcr');
+  setW(70, 170); ok(document.getElementById('cr-peds-banner').hidden && t('tab-pcr').includes('Insulina regular 10 U'), 'Crises 70 kg: doses de adulto');
+  const pa = document.getElementById('ped-age'), pu = document.getElementById('ped-age-u');
+  pa.value = '1'; pu.value = '12'; pa.dispatchEvent(new Event('input', { bubbles: true }));
+  ok(t('tab-ped').includes('Não aprovado < 2 anos') && !t('tab-ped').includes('16 mg/kg)'), 'Ped 1 ano: sem sugamadex 16 mg/kg');
+  pa.value = '5'; pa.dispatchEvent(new Event('input', { bubbles: true }));
+  ok(t('tab-ped').includes('Sugamadex (TOF ≥ 2)'), 'Ped 5 anos: sugamadex 2 mg/kg');
+  pa.value = ''; pa.dispatchEvent(new Event('input', { bubbles: true }));
+  ok(infT(10, { rateUnit: 'mcg/kg/min', prepConc: 60, table: [{ rate: 1, effect: '' }] }).includes('>10<'), 'infT: 1 mcg/kg/min × 10 kg a 60 mcg/mL = 10 mL/h');
   console.log('autoteste concluído');
 }
 
@@ -2426,6 +2448,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js');
 }
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
 </body>
 </html>
