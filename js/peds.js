@@ -212,33 +212,37 @@
       kv('Lâmina', blade(months)),
       'Separe também o tubo 0,5 mm menor e o 0,5 mm maior. Confirme com capnografia.');
 
+    const D = root.Drugs; // dados compartilhados (js/drugs.js)
+    const nf = (n) => String(n).replace('.', ',');
+    const at = D.atro.doses.peds.iot, sx = D.sux.doses.peds[months < 12 ? 'infant' : 'child'], sg = D.sug.doses.peds;
+    const ad = D.adre.doses.peds, am = D.amio.doses.peds.arrest, bc = D.bicarb.doses.peds.arrest, ca = D.calGluc.doses.peds.hyperK;
     html += card('Indução / IOT', 'var(--purple)', '',
-      row({ name: 'Atropina', perKg: 0.02, unit: 'mg', max: 0.5, conc: 0.5, concText: '0,5 mg/mL', note: 'Pré-IOT: sem dose mínima. Bradicardia: mínimo 0,1 mg (PALS).' }, kg) +
+      row({ name: D.atro.name, perKg: at.perKg, unit: 'mg', max: at.max, conc: D.atro.conc, concText: D.atro.concText, note: `Pré-IOT: sem dose mínima. Bradicardia: mínimo ${nf(at.bradyMin)} mg (PALS).` }, kg) +
       row({ name: 'Fentanil', perKg: [1, 2], unit: 'mcg', max: 100, conc: 50, concText: '50 mcg/mL' }, kg) +
       row({ name: 'Cetamina', perKg: [1, 2], unit: 'mg', conc: 50, concText: '50 mg/mL' }, kg) +
       row({ name: 'Propofol', perKg: [2, 3], unit: 'mg', conc: 10, concText: '10 mg/mL', note: 'Criança precisa de mais que adulto; reduzir se instável.' }, kg) +
       row({ name: 'Midazolam', perKg: [0.1, 0.2], unit: 'mg', max: 5, conc: 5, concText: '5 mg/mL' }, kg) +
-      row({ name: 'Rocurônio (sequência rápida)', perKg: 1.2, unit: 'mg', conc: 10, concText: '10 mg/mL' }, kg) +
-      row({ name: 'Succinilcolina', perKg: months < 12 ? 2 : 1.5, unit: 'mg', max: 150, conc: 10, concText: '10 mg/mL', note: months < 12 ? 'Lactente: 2 mg/kg.' : 'Criança: 1–1,5 mg/kg.' }, kg) +
-      row({ name: 'Sugamadex (reversão imediata)', perKg: 16, unit: 'mg', conc: 100, concText: '100 mg/mL', note: 'Rotina 2 mg/kg (TOF ≥ 2), profundo 4 mg/kg.' }, kg));
+      row({ name: `${D.roc.name} (sequência rápida)`, perKg: D.roc.doses.peds.rsi.perKg, unit: 'mg', conc: D.roc.conc, concText: D.roc.concText }, kg) +
+      row({ name: D.sux.name, perKg: sx.perKg, unit: 'mg', max: sx.max, conc: D.sux.conc, concText: D.sux.concText, note: months < 12 ? `Lactente: ${nf(sx.perKg)} mg/kg.` : 'Criança: 1–1,5 mg/kg.' }, kg) +
+      row({ name: `${D.sug.name} (reversão imediata)`, perKg: sg.immediate.perKg, unit: 'mg', conc: D.sug.conc, concText: D.sug.concText, note: `Rotina ${nf(sg.routine.perKg)} mg/kg (TOF ≥ 2), profundo ${nf(sg.deep.perKg)} mg/kg.` }, kg));
 
     html += card('PCR e arritmias', 'var(--red)', 'PALS 2020',
-      row({ name: 'Adrenalina EV/IO', perKg: 0.01, unit: 'mg', max: 1, conc: 0.1, concText: '0,1 mg/mL (1 mL + 9 mL SF)', note: 'A cada 3–5 min.' }, kg) +
-      row({ name: 'Amiodarona (FV/TV sem pulso)', perKg: 5, unit: 'mg', max: 300, conc: 50, concText: '50 mg/mL', note: 'Repetir até 3 doses (15 mg/kg).' }, kg) +
+      row({ name: `${D.adre.name} EV/IO`, perKg: ad.arrest.perKg, unit: 'mg', max: ad.arrest.max, conc: ad.arrest.conc, concText: `${nf(ad.arrest.conc)} mg/mL (${ad.arrest.prep})`, note: 'A cada 3–5 min.' }, kg) +
+      row({ name: `${D.amio.name} (FV/TV sem pulso)`, perKg: am.perKg, unit: 'mg', max: am.max, conc: D.amio.conc, concText: D.amio.concText, note: `Repetir até 3 doses (${nf(am.perKg * 3)} mg/kg).` }, kg) +
       row({ name: 'Lidocaína (alternativa)', perKg: 1, unit: 'mg', max: 100, conc: 20, concText: '2% = 20 mg/mL' }, kg) +
       row({ name: 'Adenosina 1ª dose', perKg: 0.1, unit: 'mg', max: 6, conc: 3, concText: '3 mg/mL', note: 'Bolus rápido + flush.' }, kg) +
       row({ name: 'Adenosina 2ª dose', perKg: 0.2, unit: 'mg', max: 12, conc: 3, concText: '3 mg/mL' }, kg) +
       row({ name: 'Desfibrilação', perKg: [2, 4], unit: 'J', max: 200, note: '1º choque 2 J/kg, depois 4 J/kg (até 10 J/kg).' }, kg) +
       row({ name: 'Cardioversão sincronizada', perKg: [0.5, 1], unit: 'J', note: 'Se falhar: 2 J/kg.' }, kg) +
-      (months < 3
-        ? row({ name: 'Bicarbonato 4,2% (8,4% diluído 1:1)', perKg: 1, unit: 'mEq', max: 50, conc: 0.5, concText: '0,5 mEq/mL', note: '<b>&lt; 3 meses: usar 4,2% — volume é o dobro do 8,4%.</b>' }, kg)
-        : row({ name: 'Bicarbonato 8,4%', perKg: 1, unit: 'mEq', max: 50, conc: 1, concText: '1 mEq/mL' }, kg)) +
-      row({ name: 'Gluconato de cálcio 10%', perKg: 60, unit: 'mg', max: 3000, conc: 100, concText: '100 mg/mL' }, kg) +
+      (months < bc.neonateMonths
+        ? row({ name: 'Bicarbonato 4,2% (8,4% diluído 1:1)', perKg: bc.perKg, unit: 'mEq', max: bc.max, conc: bc.neonateConc, concText: `${nf(bc.neonateConc)} mEq/mL`, note: `<b>&lt; ${bc.neonateMonths} meses: usar 4,2% — volume é o dobro do 8,4%.</b>` }, kg)
+        : row({ name: 'Bicarbonato 8,4%', perKg: bc.perKg, unit: 'mEq', max: bc.max, conc: D.bicarb.conc, concText: D.bicarb.concText }, kg)) +
+      row({ name: D.calGluc.name, perKg: ca.perKg, unit: 'mg', max: ca.max, conc: D.calGluc.conc, concText: D.calGluc.concText }, kg) +
       row({ name: 'Glicose 10% (hipoglicemia)', perKg: months < 1 ? 2 : 5, unit: 'mL', note: months < 1 ? 'Neonato: 2 mL/kg.' : '5 mL/kg = 0,5 g/kg.' }, kg));
 
     html += card('Emergências', 'var(--orange)', '',
       row({ name: 'Cristaloide (bolus)', perKg: [10, 20], unit: 'mL', note: 'Reavaliar após cada bolus.' }, kg) +
-      row({ name: 'Adrenalina IM (anafilaxia)', perKg: 0.01, unit: 'mg', max: 0.5, conc: 1, concText: '1 mg/mL, sem diluir' }, kg) +
+      row({ name: `${D.adre.name} IM (anafilaxia)`, perKg: ad.anaphylaxisIM.perKg, unit: 'mg', max: ad.anaphylaxisIM.max, conc: D.adre.conc, concText: `${D.adre.concText}, sem diluir` }, kg) +
       row({ name: 'Midazolam IM/intranasal (convulsão)', perKg: 0.2, unit: 'mg', max: 10, conc: 5, concText: '5 mg/mL' }, kg) +
       row({ name: 'Diazepam EV (convulsão)', perKg: 0.3, unit: 'mg', max: 10, conc: 5, concText: '5 mg/mL' }, kg) +
       row({ name: 'Levetiracetam (estado de mal)', perKg: 60, unit: 'mg', max: 4500, note: 'Infundir em 10–15 min.' }, kg) +

@@ -1122,6 +1122,7 @@ body {
   </button>
 </nav>
 
+<script src="js/drugs.js"></script>
 <script src="js/infusion.js"></script>
 <script src="js/mix.js"></script>
 <script src="js/scales.js"></script>
@@ -1135,6 +1136,8 @@ const numVal = el => el ? parseFloat(String(el.value).replace(',', '.')) : NaN;
 const numId  = id => numVal(document.getElementById(id));
 const W   = () => numId('weight') || 0;
 const H   = () => numId('height') || 0;
+const D   = Drugs; // dados compartilhados (js/drugs.js)
+const nf  = n => String(n).replace('.', ','); // número em rótulo, com vírgula
 const f   = (n, d=1) => (isNaN(n)||!isFinite(n)||n<=0) ? '—' : (+n.toFixed(d)).toString();
 
 let modes = {};
@@ -1332,21 +1335,24 @@ function renderIOT() {
       iotNote:`Frasco 10mg/ml | Sem diluição | Infusão → aba Sedação`,
       badges:[{t:'Broncodilatador',c:'bg'},{t:'Hipotensão importante',c:'br'}],
     }})(),
-    (() => { const wt = mk('IBW'), wr = mk('TBW'), obese = wt < wr; return {
-      id:'roc', wtype:'IBW', name:'Rocurônio', color:'var(--green)',
-      sub:'BNM não-despolarizante — duração longa', conc:'10 mg/ml (amp 5ml)', hasModes:false,
+    (() => { const R = D.roc, S = D.sug, iot = R.doses.adult.iot, rsi = R.doses.adult.rsi, imm = S.doses.adult.immediate;
+      const wt = mk(iot.weight), wr = mk(rsi.weight), ws = mk(imm.weight), obese = wt < wr;
+      const wl = w => obese ? (w === 'IBW' ? ' (IBW)' : w === 'TBW' ? ' (peso real)' : ` (${w})`) : '';
+      return {
+      id:'roc', wtype:iot.weight, name:R.name, color:'var(--green)',
+      sub:'BNM não-despolarizante — duração longa', conc:`${R.concText} (${R.pres})`, hasModes:false,
       iotRows:[
-        {l:`IOT  1 mg/kg${obese ? ' (IBW)' : ''}`, v:`${f(wt*1/10)} ml`, u:`= ${f(wt*1)} mg`},
-        {l:`RSI  1,2 mg/kg${obese ? ' (peso real)' : ''}`, v:`${f(wr*1.2/10)} ml`, u:`= ${f(wr*1.2)} mg`},
-        {l:`Sugamadex reversão rápida  16 mg/kg${obese ? ' (peso real)' : ''}`, v:`${f(wr*16/100)} ml`, u:`= ${f(wr*16)} mg (200mg/2ml)`},
+        {l:`IOT  ${nf(iot.perKg)} mg/kg${wl(iot.weight)}`, v:`${f(wt*iot.perKg/R.conc)} ml`, u:`= ${f(wt*iot.perKg)} mg`},
+        {l:`RSI  ${nf(rsi.perKg)} mg/kg${wl(rsi.weight)}`, v:`${f(wr*rsi.perKg/R.conc)} ml`, u:`= ${f(wr*rsi.perKg)} mg`},
+        {l:`Sugamadex reversão rápida  ${nf(imm.perKg)} mg/kg${wl(imm.weight)}`, v:`${f(ws*imm.perKg/S.conc)} ml`, u:`= ${f(ws*imm.perKg)} mg (${S.pres})`},
       ],
       iotNote:`Sem diluição | Início: 45-60s | Duração: ~45min${obese ? '<br>Obeso: IOT eletiva pelo IBW; RSI e sugamadex pelo peso real (início mais rápido; bula do sugamadex = peso real)' : ''}`,
       badges:[{t:'Revertível: Sugamadex',c:'bg'},{t:'Duração 45min',c:'bw'}],
     }})(),
-    (() => { const wt = mk('TBW'); return {
-      id:'sux', wtype:'TBW', name:'Succinilcolina', color:'var(--orange)',
-      sub:'BNM despolarizante — duração curta', conc:'10 mg/ml', hasModes:false,
-      iotRows:[{l:'Dose  1,5 mg/kg', v:`${f(wt*1.5/10)} ml`, u:`= ${f(wt*1.5)} mg`}],
+    (() => { const X = D.sux, d = X.doses.adult.iot, wt = mk(d.weight); return {
+      id:'sux', wtype:d.weight, name:X.name, color:'var(--orange)',
+      sub:'BNM despolarizante — duração curta', conc:X.concText, hasModes:false,
+      iotRows:[{l:`Dose  ${nf(d.perKg)} mg/kg`, v:`${f(wt*d.perKg/X.conc)} ml`, u:`= ${f(wt*d.perKg)} mg`}],
       iotNote:`Sem diluição | Início: 45-60s | Duração: 6-10min`,
       badges:[{t:'↓Duração',c:'bg'},{t:'CI: hipercalemia',c:'br'},{t:'CI: rabdomiólise, miastenia',c:'br'},{t:'Preferir Roc se CI',c:'bw'}],
     }})(),
@@ -1457,13 +1463,13 @@ function renderAdj() {
     {
       hdr: 'Reversão de Bloqueio Neuromuscular',
       drugs: [
-        (() => { const wt = wByType('TBW'); return {
-          id:'atro', wtype:'TBW', name:'Atropina', color:'var(--orange)',
-          sub:'Anticolinérgico — bradicardia / pré-BNM', conc:'0,5 mg/ml (amp 1ml)', hasModes:false,
+        (() => { const A = D.atro, b = A.doses.adult.brady, wt = wByType(b.weight); return {
+          id:'atro', wtype:b.weight, name:A.name, color:'var(--orange)',
+          sub:'Anticolinérgico — bradicardia / pré-BNM', conc:`${A.concText} (${A.pres})`, hasModes:false,
           iotRows:[
-            {l:'Bradicardia  0,01–0,02 mg/kg', v:`${f(wt*0.01/0.5,2)}–${f(wt*0.02/0.5,2)} ml`, u:`= ${f(wt*0.01,3)}–${f(wt*0.02,3)} mg`},
-            {l:'Dose fixa mín adulto', v:'1 ml', u:'= 0,5 mg'},
-            {l:'Dose máx adulto', v:'6 ml', u:'= 3 mg total'},
+            {l:`Bradicardia  ${nf(b.perKgMin)}–${nf(b.perKgMax)} mg/kg`, v:`${f(wt*b.perKgMin/A.conc,2)}–${f(wt*b.perKgMax/A.conc,2)} ml`, u:`= ${f(wt*b.perKgMin,3)}–${f(wt*b.perKgMax,3)} mg`},
+            {l:'Dose fixa mín adulto', v:`${nf(b.min/A.conc)} ml`, u:`= ${nf(b.min)} mg`},
+            {l:'Dose máx adulto', v:`${nf(b.max/A.conc)} ml`, u:`= ${nf(b.max)} mg total`},
           ],
           iotNote:`Ampola 0,5mg/ml | Mín efetiva ≥ 0,5mg (abaixo: bradicardia paradoxal)<br>Dar <strong>antes</strong> da neostigmina`,
           badges:[{t:'Mín 0,5mg',c:'bw'},{t:'Máx 3mg',c:'bw'},{t:'Bradicardia paradoxal <0,5mg',c:'br'}],
@@ -1476,18 +1482,18 @@ function renderAdj() {
             {l:'Dose máx  0,07 mg/kg', v:`${f(wt*0.07/0.5,2)} ml`, u:`= ${f(wt*0.07,2)} mg`},
             {l:'Dose máx absoluta', v:'10 ml', u:'= 5 mg'},
           ],
-          iotNote:`<strong>Sempre + Atropina 0,015mg/kg:</strong> ${f(wt*0.015/0.5,2)} ml (0,5mg/ml)<br>Só com TOF 4 com fadiga (ASA 2023) — TOF &lt;4: preferir Sugamadex`,
+          iotNote:`<strong>Sempre + Atropina ${nf(D.atro.doses.adult.withNeostigmine.perKg)}mg/kg:</strong> ${f(wByType(D.atro.doses.adult.withNeostigmine.weight)*D.atro.doses.adult.withNeostigmine.perKg/D.atro.conc,2)} ml (${D.atro.concText})<br>Só com TOF 4 com fadiga (ASA 2023) — TOF &lt;4: preferir Sugamadex`,
           badges:[{t:'Sempre + Atropina',c:'br'},{t:'Só TOF 4 c/ fadiga',c:'bw'},{t:'Máx 5mg',c:'bw'}],
         }})(),
-        (() => { const wt = wByType('TBW'); return {
-          id:'sug', wtype:'TBW', name:'Sugamadex', color:'var(--green)',
-          sub:'Reversão seletiva Rocurônio / Vecurônio', conc:'200 mg/2ml (amp)', hasModes:false,
+        (() => { const S = D.sug, a = S.doses.adult, row = (l, d) => { const w = wByType(d.weight); return {l:`${l}  (${nf(d.perKg)} mg/kg)`, v:`${f(w*d.perKg/S.conc,1)} ml`, u:`= ${f(w*d.perKg,0)} mg`}; }; return {
+          id:'sug', wtype:a.routine.weight, name:S.name, color:'var(--green)',
+          sub:'Reversão seletiva Rocurônio / Vecurônio', conc:S.pres, hasModes:false,
           iotRows:[
-            {l:'Rotina — TOF ≥ 2  (2 mg/kg)', v:`${f(wt*2/100,1)} ml`, u:`= ${f(wt*2,0)} mg`},
-            {l:'Profundo — TOF 0–1  (4 mg/kg)', v:`${f(wt*4/100,1)} ml`, u:`= ${f(wt*4,0)} mg`},
-            {l:'Imediata RSI  (16 mg/kg)', v:`${f(wt*16/100,1)} ml`, u:`= ${f(wt*16,0)} mg`},
+            row('Rotina — TOF ≥ 2', a.routine),
+            row('Profundo — TOF 0–1', a.deep),
+            row('Imediata RSI', a.immediate),
           ],
-          iotNote:`100mg/ml | Bolus EV rápido | Sem diluição<br><strong>Reversão imediata: 3min após Roc 1,2mg/kg</strong>`,
+          iotNote:`${S.concText} | Bolus EV rápido | Sem diluição<br><strong>Reversão imediata: 3min após Roc 1,2mg/kg</strong>`,
           badges:[{t:'Específico Roc/Vec',c:'bi'},{t:'Dose por peso real (bula)',c:'bi'},{t:'TOF guia dose',c:'bw'}],
         }})(),
       ],
@@ -1599,15 +1605,15 @@ function renderAdj() {
       drugs: [
         (() => { const wt = wByType('TBW'); return {
           id:'hcort', wtype:'TBW', name:'Hidrocortisona', color:'var(--yellow)',
-          sub:'Corticoide — choque, insuf. adrenal, anafilaxia', conc:'100 mg/2ml ou 500mg pó', hasModes:false,
-          iotRows:[
+          sub:'Corticoide — choque, insuf. adrenal, anafilaxia', conc:`${D.hcort.amp.pres} ou ${D.hcort.powder.pres}`, hasModes:false,
+          iotRows:(() => { const H = D.hcort, A = H.amp, P = H.powder, an = H.doses.adult.anaphylaxis; return [
             {l:'Dose de estresse periop.', v:'50–100 mg', u:'IV bolus (repetir 8/8h)'},
-            {l:'Choque anafilático  200–500mg — amp 100mg/2ml', v:'4–10 ml', u:'(50mg/ml) IV bolus'},
-            {l:'Choque anafilático  200–500mg — pó 500mg em 2ml', v:'0,8–2 ml', u:'(250mg/ml) IV bolus'},
+            {l:`Choque anafilático  ${an.min}–${an.max}mg — ${A.pres}`, v:`${nf(an.min/A.conc)}–${nf(an.max/A.conc)} ml`, u:`(${A.concText}) IV bolus`},
+            {l:`Choque anafilático  ${an.min}–${an.max}mg — ${P.pres}`, v:`${nf(an.min/P.conc)}–${nf(an.max/P.conc)} ml`, u:`(${P.concText}) IV bolus`},
             {l:'Insuf. adrenal / sepse', v:'200 mg/dia', u:'= 50mg 6/6h ou infusão'},
-            {l:'Dose antiinflamatória  1–5 mg/kg', v:`${f(wt*1/50,1)}–${f(Math.min(wt*5,500)/50,1)} ml`, u:`= ${f(wt*1,0)}–${f(Math.min(wt*5,500),0)} mg (50mg/ml)`},
-          ],
-          iotNote:`Volumes em ml calculados para 50mg/ml (amp 100mg/2ml). <strong>Pó 500mg em 2ml = 250mg/ml (÷5 o volume)</strong><br>
+            {l:'Dose antiinflamatória  1–5 mg/kg', v:`${f(wt*1/A.conc,1)}–${f(Math.min(wt*5,500)/A.conc,1)} ml`, u:`= ${f(wt*1,0)}–${f(Math.min(wt*5,500),0)} mg (${A.concText})`},
+          ]; })(),
+          iotNote:`Volumes em ml calculados para ${D.hcort.amp.concText} (${D.hcort.amp.pres}). <strong>${D.hcort.powder.pres.replace(/^./, c => c.toUpperCase())} =${D.hcort.powder.concText} (÷${D.hcort.powder.conc/D.hcort.amp.conc} o volume)</strong><br>
           <strong>Infusão contínua sepse: 200mg em 48ml SF (4mg/ml) → 200mg/24h ≈ 2 ml/h</strong>`,
           badges:[{t:'Anafilaxia',c:'br'},{t:'Insuf. adrenal',c:'bg'},{t:'Sepse refratária',c:'bg'},{t:'Hiperglicemia',c:'bw'}],
         }})(),

@@ -65,7 +65,8 @@ sw.js        — service worker (offline cache)
 manifest.json — PWA manifest
 icon-192.png  — PWA icon
 icon-512.png  — PWA icon
-js/          — calculation modules (infusion, bolus, mix, scales, peds)
+js/          — calculation modules (drugs, infusion, bolus, mix, scales, peds, crises)
+               js/drugs.js = fonte única das drogas compartilhadas entre abas
 test/        — automated tests (node --test)
 ```
 

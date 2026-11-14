@@ -18,9 +18,10 @@
      Calculation layer
   ════════════════════════════════════════ */
 
-  /** Dantrolene (Dantrolen®) vial: 20 mg, reconstituted with 60 mL sterile water. */
-  const DANT_VIAL_MG = 20;
-  const DANT_VIAL_WATER_ML = 60;
+  /** Shared drug data (js/drugs.js). In Node tests it is required directly. */
+  const D = root.Drugs || (typeof require === 'function' ? require('./drugs.js') : null);
+  const DANT = D.dant, DANT_MH = DANT.doses.crisis.mh;
+  const nf = (n) => String(n).replace('.', ',');
 
   /**
    * Dantrolene for malignant hyperthermia (MHAUS): 2.5 mg/kg, repeat until
@@ -31,10 +32,10 @@
    */
   function dantrolene(kg, givenMg) {
     if (!(kg > 0)) return null;
-    const dose = 2.5 * kg;
-    const max = 10 * kg;
-    const vials = Math.ceil(dose / DANT_VIAL_MG);
-    return { dose, vials, water: vials * DANT_VIAL_WATER_ML, max, remaining: Math.max(0, max - (givenMg || 0)) };
+    const dose = DANT_MH.perKg * kg;
+    const max = DANT_MH.maxPerKg * kg;
+    const vials = Math.ceil(dose / DANT.vialMg);
+    return { dose, vials, water: vials * DANT.vialWaterMl, max, remaining: Math.max(0, max - (givenMg || 0)) };
   }
 
   /**
@@ -44,7 +45,7 @@
    */
   function anaphylaxis(kg) {
     return {
-      imMg: kg > 0 ? Math.min(0.01 * kg, 0.5) : 0.5,
+      imMg: kg > 0 ? Math.min(D.adre.doses.crisis.anaphylaxisIM.perKg * kg, D.adre.doses.crisis.anaphylaxisIM.max) : D.adre.doses.crisis.anaphylaxisIM.max,
       fluidMin: kg > 0 ? 10 * kg : 0,
       fluidMax: kg > 0 ? 20 * kg : 0,
     };
@@ -82,7 +83,8 @@
    * @returns {string}
    */
   function nextAmiodarone(given) {
-    return given === 0 ? '300 mg' : given === 1 ? '150 mg' : 'dose máxima atingida';
+    const a = D.amio.doses.crisis.arrest;
+    return given === 0 ? `${a.first} mg` : given === 1 ? `${a.second} mg` : 'dose máxima atingida';
   }
 
   /**
@@ -339,7 +341,7 @@
           ${btn('rhythm', 'Ritmo checado')}
           ${btn('adre', 'Adrenalina 1 mg <b id="cr-n-adre">0</b>', 'cr-red')}
           ${btn('shock', 'Choque <b id="cr-n-shock">0</b>', 'cr-orange')}
-          ${btn('amio', 'Amiodarona <b id="cr-n-amio">300 mg</b>')}
+          ${btn('amio', `Amiodarona <b id="cr-n-amio">${nextAmiodarone(0)}</b>`)}
           ${btn('rosc', 'RCE / parar', 'cr-green')}
         </div>
         <div class="cr-btns">
@@ -353,7 +355,7 @@
       <div class="drug-card"><div class="dose-table" id="cr-pcr-log"></div></div>
       ${card('Causas reversíveis (5H e 5T)', 'var(--yellow)', '',
         `<div class="dose-table">${kv('Hipovolemia · Hipóxia · H⁺ (acidose)', '')}${kv('Hipo/hipercalemia · Hipotermia', '')}${kv('Tensão (pneumotórax) · Tamponamento', '')}${kv('Toxinas (incl. anestésico local → aba An.Local) · Trombose coronária/pulmonar', '')}</div>`,
-        'FV/TV sem pulso: choque → 2 min RCP; adrenalina após o 2º choque; amiodarona 300 mg após o 3º, 150 mg após o 5º. AESP/assistolia: adrenalina assim que possível (AHA 2020).')}`;
+        `FV/TV sem pulso: choque → 2 min RCP; adrenalina após o 2º choque; amiodarona ${D.amio.doses.crisis.arrest.first} mg após o 3º, ${D.amio.doses.crisis.arrest.second} mg após o 5º. Pós-RCE: ${D.amio.doses.crisis.postRosc.steps.map((x) => `${nf(x.rate)} ${D.amio.doses.crisis.postRosc.rateUnit} por ${x.duration}`).join(' → ')}. AESP/assistolia: adrenalina assim que possível (AHA 2020).`)}`;
   }
 
   function hmMarkup() {
@@ -364,11 +366,11 @@
         'Pedir ajuda e o <b>kit de HM</b>; avisar o cirurgião (encerrar ou abreviar a cirurgia).',
         '<b>Desligar os voláteis</b> e suspender a succinilcolina. Não precisa trocar o aparelho: filtros de carvão ativado ou O₂ a 10 L/min.',
         'Hiperventilar com O₂ 100% a ≥ 10 L/min; manter anestesia com propofol EV.',
-        '<b>Dantroleno</b> 2,5 mg/kg EV rápido; repetir até controlar a hipercapnia, a taquicardia e a rigidez.',
+        `<b>Dantroleno</b> ${nf(DANT_MH.perKg)} mg/kg EV rápido; repetir até controlar a hipercapnia, a taquicardia e a rigidez.`,
         'Resfriar se T &gt; 39 °C: soro gelado EV, gelo em axilas e virilhas; parar em 38 °C.',
         'Hipercalemia: tratar (card Hipercalemia). Arritmias: amiodarona ou β-bloqueador. <b>Evitar bloqueador de canal de cálcio</b> com dantroleno.',
         'Gasometria, K⁺, CK, mioglobina urinária, coagulação. Diurese &gt; 1 mL/kg/h.',
-        'UTI por ≥ 24 h (recrudescência). Manutenção: dantroleno 1 mg/kg a cada 4–6 h ou 0,25 mg/kg/h.',
+        `UTI por ≥ 24 h (recrudescência). Manutenção: dantroleno 1 mg/kg a cada 4–6 h ou ${nf(DANT.doses.crisis.mhMaintenance.rate)} ${DANT.doses.crisis.mhMaintenance.rateUnit}.`,
       ]))}`;
   }
 
@@ -393,10 +395,10 @@
   function kMarkup() {
     return `
       ${card('Hipercalemia', 'var(--orange)', 'UK Kidney Association 2023', `<div class="dose-table">
-        ${kv('1. Estabilizar a membrana', '<b>Gluconato de cálcio 10% 30 mL</b> EV em 5–10 min<br><span class="dose-unit">ou cloreto de cálcio 10% 10 mL (acesso central). Repetir se ECG não melhorar.</span>')}
+        ${kv('1. Estabilizar a membrana', `<b>Gluconato de cálcio 10% ${D.calGluc.doses.crisis.hyperK.dose / D.calGluc.conc} mL</b> EV em 5–10 min<br><span class="dose-unit">ou cloreto de cálcio 10% 10 mL (acesso central). Repetir se ECG não melhorar.</span>`)}
         ${kv('2. Insulina + glicose', '<b>Insulina regular 10 U</b> + 25 g de glicose<br><span class="dose-unit">= glicose 50% 50 mL ou glicose 10% 250 mL em 15–30 min. Glicemia a cada hora por 6 h.</span>')}
         ${kv('3. β₂-agonista', 'Salbutamol 10–20 mg inalatório<br><span class="dose-unit">(adjuvante; não usar isolado)</span>')}
-        ${kv('4. Acidose metabólica', 'Bicarbonato de sódio 8,4% 50 mL<br><span class="dose-unit">só com acidose; não misturar com cálcio na mesma via</span>')}
+        ${kv('4. Acidose metabólica', `Bicarbonato de sódio 8,4% ${D.bicarb.doses.crisis.hyperK.dose / D.bicarb.conc} mL<br><span class="dose-unit">só com acidose; não misturar com cálcio na mesma via</span>`)}
         ${kv('5. Remover K⁺', 'Diurético de alça, resina; <b>diálise</b> se refratária ou insuficiência renal')}
       </div>`,
         'No intraoperatório: hiperventilar, suspender succinilcolina e fontes de K⁺ (soluções com K⁺, hemácias antigas). PCR por hipercalemia: cálcio + bicarbonato + insulina/glicose durante a RCP.')}
@@ -424,32 +426,32 @@
     if (crisis === 'hm') {
       const d = CrisesCalc.dantrolene(kg, dant.given);
       if (!d) return card('Dantroleno', 'var(--red)', '', noKg);
-      return card('Dantroleno', 'var(--red)', 'Frasco 20 mg + 60 mL de água estéril (sem SF/SG)',
+      return card(DANT.name, 'var(--red)', `Frasco ${DANT.vialMg} mg + ${DANT.vialWaterMl} mL de água estéril (sem SF/SG)`,
         `<div class="dose-table">
-          ${kv('Dose 2,5 mg/kg', `<b>${fmt(d.dose, 0)} mg</b> = ${d.vials} frascos<br><span class="dose-unit">${d.water} mL de água estéril</span>`)}
-          ${kv('Teto usual 10 mg/kg', `${fmt(d.max, 0)} mg`)}
-          ${kv('Já administrado', `<b>${fmt(dant.given, 0)} mg</b> (${dant.doses} dose${dant.doses === 1 ? '' : 's'})<br><span class="dose-unit">restam ${fmt(d.remaining, 0)} mg até 10 mg/kg</span>`)}
+          ${kv(`Dose ${nf(DANT_MH.perKg)} mg/kg`, `<b>${fmt(d.dose, 0)} mg</b> = ${d.vials} frascos<br><span class="dose-unit">${d.water} mL de água estéril</span>`)}
+          ${kv(`Teto usual ${DANT_MH.maxPerKg} mg/kg`, `${fmt(d.max, 0)} mg`)}
+          ${kv('Já administrado', `<b>${fmt(dant.given, 0)} mg</b> (${dant.doses} dose${dant.doses === 1 ? '' : 's'})<br><span class="dose-unit">restam ${fmt(d.remaining, 0)} mg até ${DANT_MH.maxPerKg} mg/kg</span>`)}
         </div>
         <div class="cr-btns">${btn('dantdose', `+ Dose de ${fmt(d.dose, 0)} mg dada`, 'cr-red')}${btn('dantreset', 'Zerar', 'cr-ghost')}</div>
         <div class="dilution-note" id="cr-dant-last"></div>`,
-        'Pode ultrapassar 10 mg/kg com orientação especializada. Diluição demorada: separar uma pessoa só para preparar.');
+        `Pode ultrapassar ${DANT_MH.maxPerKg} mg/kg com orientação especializada. Diluição demorada: separar uma pessoa só para preparar.`);
     }
     if (crisis === 'ana') {
       const a = CrisesCalc.anaphylaxis(kg);
       return card('Doses', 'var(--red)', kg ? `Peso ${fmt(kg)} kg` : 'Doses de adulto (sem peso)',
         `<div class="dose-table">
           ${kv('Adrenalina IM (sem acesso)', `<b>${fmt(a.imMg, 2)} mg</b> = ${fmt(a.imMg, 2)} mL de 1 mg/mL<br><span class="dose-unit">0,01 mg/kg, máx 0,5 mg; repetir em 5 min</span>`)}
-          ${kv('Adrenalina EV — hipotensão grave', '<b>50 mcg</b> = 5 mL de 10 mcg/mL<br><span class="dose-unit">1 mg + 99 mL SF; titular 50–100 mcg a cada 1–2 min</span>')}
+          ${(() => { const iv = D.adre.doses.crisis.anaphylaxisIV; return kv('Adrenalina EV — hipotensão grave', `<b>${iv.mcg} mcg</b> = ${nf(iv.mcg / iv.concMcg)} mL de ${iv.concMcg} mcg/mL<br><span class="dose-unit">${iv.prep}; titular 50–100 mcg a cada 1–2 min</span>`); })()}
           ${kv('Adrenalina EV — PCR', '1 mg a cada 3–5 min')}
           ${kv('Cristaloide em bolus', kg ? `<b>${fmt(a.fluidMin, 0)}–${fmt(a.fluidMax, 0)} mL</b><br><span class="dose-unit">10–20 mL/kg, repetir conforme resposta</span>` : '500–1000 mL, repetir')}
         </div>`,
-        'Infusão de adrenalina 0,05–0,1 mcg/kg/min: ver a aba Vasoat.');
+        (() => { const i = D.adre.doses.crisis.infusion; return `Infusão de adrenalina ${nf(i.rateMin)}–${nf(i.rateMax)} ${i.rateUnit} (${i.prep} = ${i.prepConc} mcg/mL): tabela na aba Vasoat.`; })());
     }
     if (crisis === 'k') {
       if (!kg || kg >= 40) return '';
       return card('Criança (< 40 kg)', 'var(--orange)', `Peso ${fmt(kg)} kg`,
         `<div class="dose-table">
-          ${kv('Gluconato de cálcio 10% 0,6 mL/kg', `${fmt(Math.min(0.6 * kg, 30), 1)} mL (máx 30 mL)`)}
+          ${(() => { const c = D.calGluc.doses.peds.hyperK, cc = D.calGluc.conc; return kv(`Gluconato de cálcio 10% ${nf(c.perKg / cc)} mL/kg`, `${fmt(Math.min(c.perKg * kg, c.max) / cc, 1)} mL (máx ${c.max / cc} mL)`); })()}
           ${kv('Insulina 0,1 U/kg + glicose 0,5 g/kg', `${fmt(Math.min(0.1 * kg, 10), 1)} U + ${fmt(Math.min(0.5 * kg, 25), 1)} g (glicose 10% ${fmt(Math.min(5 * kg, 250), 0)} mL)`)}
         </div>`, 'Peso de criança no painel adulto: confira na aba Ped.');
     }
