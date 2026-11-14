@@ -347,7 +347,7 @@
     }
     const read = (id) => {
       const el = document.getElementById(id);
-      const n = el ? parseFloat(el.value) : NaN;
+      const n = el ? parseFloat(String(el.value).replace(',', '.')) : NaN;
       return n > 0 ? n : null;
     };
     const w = read('weight');
@@ -500,7 +500,7 @@
     },
 
     egri() {
-      const kg = (() => { const el = document.getElementById('weight'); const n = el ? parseFloat(el.value) : NaN; return n > 0 ? n : null; })();
+      const kg = (() => { const el = document.getElementById('weight'); const n = el ? parseFloat(String(el.value).replace(',', '.')) : NaN; return n > 0 ? n : null; })();
       const values = Object.assign({}, state.egri);
       if (kg !== null) values.weight = egriWeightPts(kg);
       const r = egri(values);
@@ -603,9 +603,9 @@
    */
   function roxBody() {
     return `
-      <div class="dose-row"><span class="dose-label">SpO₂</span><span class="dose-val"><input type="number" id="sc-rox-spo2" class="hid-input" inputmode="decimal" placeholder="94" min="50" max="100"><span class="dose-unit"> %</span></span></div>
-      <div class="dose-row"><span class="dose-label">FiO₂</span><span class="dose-val"><input type="number" id="sc-rox-fio2" class="hid-input" inputmode="decimal" placeholder="50" min="21" max="100"><span class="dose-unit"> %</span></span></div>
-      <div class="dose-row"><span class="dose-label">Frequência respiratória</span><span class="dose-val"><input type="number" id="sc-rox-rr" class="hid-input" inputmode="decimal" placeholder="24" min="1"><span class="dose-unit"> irpm</span></span></div>
+      <div class="dose-row"><span class="dose-label">SpO₂</span><span class="dose-val"><input type="text" id="sc-rox-spo2" class="hid-input" inputmode="decimal" placeholder="94" min="50" max="100"><span class="dose-unit"> %</span></span></div>
+      <div class="dose-row"><span class="dose-label">FiO₂</span><span class="dose-val"><input type="text" id="sc-rox-fio2" class="hid-input" inputmode="decimal" placeholder="50" min="21" max="100"><span class="dose-unit"> %</span></span></div>
+      <div class="dose-row"><span class="dose-label">Frequência respiratória</span><span class="dose-val"><input type="text" id="sc-rox-rr" class="hid-input" inputmode="decimal" placeholder="24" min="1"><span class="dose-unit"> irpm</span></span></div>
       <div class="dose-row"><span class="dose-label">Tempo desde o início do CNAF</span><span class="dose-val">
         <select id="sc-rox-t" class="sc-sel"><option value="2">2 h</option><option value="6">6 h</option><option value="12">12 h</option><option value="0">Outro horário</option></select></span></div>
       <div id="sc-rox-out"></div>

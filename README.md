@@ -27,7 +27,7 @@ Clinical drug dose calculator for anaesthesia, critical care, and emergency medi
 | **An. Local** | Local anaesthetics (Lidocaína, Bupivacaína, Levobupivacaína, Ropivacaína) with max dose and volume per concentration; LAST / Intralipid protocol |
 | **Vasoat.** | Vasoactives: Noradrenalina, Dopamina, Dobutamina, Adrenalina, Tridil, Nipride — infusion tables (ml/h) |
 | **Hidrat.** | Perioperative hydration: Holliday-Segar 4-2-1 maintenance, fasting deficit replacement (50/25/25), intraoperative losses |
-| **PCR** | Cardiac arrest drugs: Adrenalina, Amiodarona, Atropina, Bicarbonato, MgSO₄, Desfibrilação |
+| **Crises** | Cardiac arrest with timers (total, 2-min cycle, adrenaline 3–5 min), metronome, shock/drug counters and event log; malignant hyperthermia (dantrolene), anaphylaxis, hyperkalemia, massive hemorrhage; cardiac arrest drugs (`js/crises.js`) |
 | **Volátil** | Volatile anaesthetic consumption (biphasic): Sevorane, Isoflurano, Desflurano, Halotano — real gas-law formula, consumption chart |
 
 ### Volatile Calculator

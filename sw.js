@@ -2,7 +2,7 @@
 //     Exemplo: se o repo for github.com/seunome/drugcalc → '/drugcalc/'
 const REPO = '/anest-tools/';
 
-const CACHE = 'anest-tools-v10';
+const CACHE = 'anest-tools-v12';
 const ASSETS = [
   REPO,
   REPO + 'index.html',
@@ -11,12 +11,19 @@ const ASSETS = [
   REPO + 'js/scales.js',
   REPO + 'js/bolus.js',
   REPO + 'js/peds.js',
+  REPO + 'js/crises.js',
+];
+// CDN em separado: se falhar, não derruba o cache dos arquivos locais
+const CDN_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS))
+    caches.open(CACHE).then(c => Promise.all([
+      c.addAll(ASSETS),
+      ...CDN_ASSETS.map(u => c.add(u).catch(() => {})),
+    ]))
   );
   self.skipWaiting();
 });

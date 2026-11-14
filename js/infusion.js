@@ -513,12 +513,12 @@
       <div class="drug-card"><div class="inf-pad">
         <div class="inf-label">Diluição</div>
         <div class="inf-row">
-          <input id="inf-amount" class="inf-in" type="number" inputmode="decimal" placeholder="quantidade" min="0" step="any">
+          <input id="inf-amount" class="inf-in" type="text" inputmode="decimal" placeholder="quantidade" min="0" step="any">
           <select id="inf-amount-unit" class="inf-sel">
             <option>g</option><option selected>mg</option><option>mcg</option><option>UI</option>
           </select>
           <span class="inf-sep">em</span>
-          <input id="inf-volume" class="inf-in" type="number" inputmode="decimal" placeholder="volume" min="0" step="any">
+          <input id="inf-volume" class="inf-in" type="text" inputmode="decimal" placeholder="volume" min="0" step="any">
           <span class="inf-sep">mL</span>
         </div>
         <div class="inf-conc" id="inf-conc">—</div>
@@ -548,14 +548,14 @@
               <option value="TBW">TBW (real)</option><option value="IBW">IBW (ideal)</option>
               <option value="ABW">ABW (corrigido)</option><option value="LBW">LBW (magro)</option>
             </select>
-            <input id="inf-weight" class="inf-in" type="number" inputmode="decimal" placeholder="kg" min="0" step="any">
+            <input id="inf-weight" class="inf-in" type="text" inputmode="decimal" placeholder="kg" min="0" step="any">
             <span class="inf-sep">kg</span>
           </div>
           <div class="inf-hint" id="inf-weight-hint"></div>
         </div>
 
         <div class="inf-label" id="inf-main-label">Velocidade programada na bomba (mL/h)</div>
-        <input id="inf-main" class="inf-in inf-wide inf-big" type="number" inputmode="decimal" placeholder="0" min="0" step="any">
+        <input id="inf-main" class="inf-in inf-wide inf-big" type="text" inputmode="decimal" placeholder="0" min="0" step="any">
 
         <div id="inf-step-wrap" hidden>
           <div class="inf-label">Resolução da bomba</div>
@@ -566,16 +566,16 @@
 
         <div class="inf-label">Volume restante (opcional)</div>
         <div class="inf-row">
-          <input id="inf-remaining" class="inf-in" type="number" inputmode="decimal" placeholder="mL" min="0" step="any">
+          <input id="inf-remaining" class="inf-in" type="text" inputmode="decimal" placeholder="mL" min="0" step="any">
           <span class="inf-sep">mL</span>
         </div>
 
         <details class="inf-manage">
           <summary>Limites (opcional, só geram alerta)</summary>
           <div class="inf-label" id="inf-maxdose-label">Dose máxima</div>
-          <input id="inf-max-dose" class="inf-in inf-wide" type="number" inputmode="decimal" placeholder="vazio = sem limite" min="0" step="any">
+          <input id="inf-max-dose" class="inf-in inf-wide" type="text" inputmode="decimal" placeholder="vazio = sem limite" min="0" step="any">
           <div class="inf-label">Velocidade máxima (mL/h)</div>
-          <input id="inf-max-rate" class="inf-in inf-wide" type="number" inputmode="decimal" placeholder="vazio = sem limite" min="0" step="any">
+          <input id="inf-max-rate" class="inf-in inf-wide" type="text" inputmode="decimal" placeholder="vazio = sem limite" min="0" step="any">
         </details>
       </div></div>
 

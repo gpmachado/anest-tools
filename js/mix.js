@@ -126,10 +126,10 @@
           <div class="drug-subtitle">Quanto usar de cada solução · água destilada = 0 %</div>
         </div></div>
         <div class="dose-table">
-          <div class="dose-row"><span class="dose-label">Solução 1</span><span class="dose-val"><input type="number" id="mix-c1" class="hid-input" inputmode="decimal" placeholder="20" min="0" step="any"><span class="dose-unit"> %</span></span></div>
-          <div class="dose-row"><span class="dose-label">Solução 2</span><span class="dose-val"><input type="number" id="mix-c2" class="hid-input" inputmode="decimal" placeholder="0,9" min="0" step="any"><span class="dose-unit"> %</span></span></div>
-          <div class="dose-row"><span class="dose-label">Concentração alvo</span><span class="dose-val"><input type="number" id="mix-ct" class="hid-input" inputmode="decimal" placeholder="3" min="0" step="any"><span class="dose-unit"> %</span></span></div>
-          <div class="dose-row"><span class="dose-label">Volume alvo</span><span class="dose-val"><input type="number" id="mix-vt" class="hid-input" inputmode="decimal" placeholder="500" min="0" step="any"><span class="dose-unit"> mL</span></span></div>
+          <div class="dose-row"><span class="dose-label">Solução 1</span><span class="dose-val"><input type="text" id="mix-c1" class="hid-input" inputmode="decimal" placeholder="20" min="0" step="any"><span class="dose-unit"> %</span></span></div>
+          <div class="dose-row"><span class="dose-label">Solução 2</span><span class="dose-val"><input type="text" id="mix-c2" class="hid-input" inputmode="decimal" placeholder="0,9" min="0" step="any"><span class="dose-unit"> %</span></span></div>
+          <div class="dose-row"><span class="dose-label">Concentração alvo</span><span class="dose-val"><input type="text" id="mix-ct" class="hid-input" inputmode="decimal" placeholder="3" min="0" step="any"><span class="dose-unit"> %</span></span></div>
+          <div class="dose-row"><span class="dose-label">Volume alvo</span><span class="dose-val"><input type="text" id="mix-vt" class="hid-input" inputmode="decimal" placeholder="500" min="0" step="any"><span class="dose-unit"> mL</span></span></div>
         </div>
         <div id="mix-out"></div>
         <div class="dilution-note">Considera que os volumes se somam (boa aproximação para soluções diluídas). Confira sempre o rótulo e a concentração real das ampolas.</div>

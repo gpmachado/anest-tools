@@ -88,7 +88,7 @@
     const host = document.getElementById('bolus-root');
     if (!host || host.firstChild) return;
     const row = (label, input) => `<div class="dose-row"><span class="dose-label">${label}</span><span class="dose-val">${input}</span></div>`;
-    const inp = (id, ph, unit) => `<input type="number" id="${id}" class="hid-input" inputmode="decimal" placeholder="${ph}" min="0" step="any"><span class="dose-unit"> ${unit}</span>`;
+    const inp = (id, ph, unit) => `<input type="text" id="${id}" class="hid-input" inputmode="decimal" placeholder="${ph}" min="0" step="any"><span class="dose-unit"> ${unit}</span>`;
     host.innerHTML = `
       <div class="sec-hdr">Diluição de bolus</div>
       <div class="drug-card">

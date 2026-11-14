@@ -182,9 +182,9 @@
    */
   function compute() {
     const out = document.getElementById('ped-out');
-    const ageVal = parseFloat(document.getElementById('ped-age').value);
+    const ageVal = parseFloat(String(document.getElementById('ped-age').value).replace(',', '.'));
     const months = isNaN(ageVal) ? NaN : ageVal * parseFloat(document.getElementById('ped-age-u').value);
-    const typed = parseFloat(document.getElementById('ped-weight').value);
+    const typed = parseFloat(String(document.getElementById('ped-weight').value).replace(',', '.'));
     const est = estWeight(months);
     const kg = typed > 0 ? typed : est ? est.kg : 0;
     const info = document.getElementById('ped-wused');
@@ -213,7 +213,7 @@
       'Separe também o tubo 0,5 mm menor e o 0,5 mm maior. Confirme com capnografia.');
 
     html += card('Indução / IOT', 'var(--purple)', '',
-      row({ name: 'Atropina', perKg: 0.02, unit: 'mg', max: 0.5, conc: 0.5, concText: '0,5 mg/mL', note: 'Lactente ou bradicardia. Sem dose mínima (PALS 2020).' }, kg) +
+      row({ name: 'Atropina', perKg: 0.02, unit: 'mg', max: 0.5, conc: 0.5, concText: '0,5 mg/mL', note: 'Pré-IOT: sem dose mínima. Bradicardia: mínimo 0,1 mg (PALS).' }, kg) +
       row({ name: 'Fentanil', perKg: [1, 2], unit: 'mcg', max: 100, conc: 50, concText: '50 mcg/mL' }, kg) +
       row({ name: 'Cetamina', perKg: [1, 2], unit: 'mg', conc: 50, concText: '50 mg/mL' }, kg) +
       row({ name: 'Propofol', perKg: [2, 3], unit: 'mg', conc: 10, concText: '10 mg/mL', note: 'Criança precisa de mais que adulto; reduzir se instável.' }, kg) +
@@ -230,7 +230,9 @@
       row({ name: 'Adenosina 2ª dose', perKg: 0.2, unit: 'mg', max: 12, conc: 3, concText: '3 mg/mL' }, kg) +
       row({ name: 'Desfibrilação', perKg: [2, 4], unit: 'J', max: 200, note: '1º choque 2 J/kg, depois 4 J/kg (até 10 J/kg).' }, kg) +
       row({ name: 'Cardioversão sincronizada', perKg: [0.5, 1], unit: 'J', note: 'Se falhar: 2 J/kg.' }, kg) +
-      row({ name: 'Bicarbonato 8,4%', perKg: 1, unit: 'mEq', max: 50, conc: 1, concText: '1 mEq/mL', note: months < 3 ? '<b>&lt; 3 meses: diluir 1:1 (4,2%).</b>' : '' }, kg) +
+      (months < 3
+        ? row({ name: 'Bicarbonato 4,2% (8,4% diluído 1:1)', perKg: 1, unit: 'mEq', max: 50, conc: 0.5, concText: '0,5 mEq/mL', note: '<b>&lt; 3 meses: usar 4,2% — volume é o dobro do 8,4%.</b>' }, kg)
+        : row({ name: 'Bicarbonato 8,4%', perKg: 1, unit: 'mEq', max: 50, conc: 1, concText: '1 mEq/mL' }, kg)) +
       row({ name: 'Gluconato de cálcio 10%', perKg: 60, unit: 'mg', max: 3000, conc: 100, concText: '100 mg/mL' }, kg) +
       row({ name: 'Glicose 10% (hipoglicemia)', perKg: months < 1 ? 2 : 5, unit: 'mL', note: months < 1 ? 'Neonato: 2 mL/kg.' : '5 mL/kg = 0,5 g/kg.' }, kg));
 
@@ -272,10 +274,10 @@
       <div class="sec-hdr">Paciente pediátrico</div>
       <div class="drug-card"><div class="dose-table">
         <div class="dose-row"><span class="dose-label">Idade</span><span class="dose-val">
-          <input type="number" id="ped-age" class="hid-input" inputmode="decimal" placeholder="3" min="0" step="any">
+          <input type="text" id="ped-age" class="hid-input" inputmode="decimal" placeholder="3" min="0" step="any">
           <select id="ped-age-u" class="hid-input" style="width:auto"><option value="12">anos</option><option value="1">meses</option><option value="0.0329">dias</option></select></span></div>
         <div class="dose-row"><span class="dose-label">Peso (vazio = estimado)</span><span class="dose-val">
-          <input type="number" id="ped-weight" class="hid-input" inputmode="decimal" placeholder="—" min="0" step="any"><span class="dose-unit"> kg</span></span></div>
+          <input type="text" id="ped-weight" class="hid-input" inputmode="decimal" placeholder="—" min="0" step="any"><span class="dose-unit"> kg</span></span></div>
         <div class="dose-row"><span class="dose-label" id="ped-wused"></span></div>
       </div></div>
       <div id="ped-out"></div>`;

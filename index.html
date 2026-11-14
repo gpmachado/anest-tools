@@ -717,6 +717,37 @@ body {
 #tab-esc .sc-sel { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px; font-size: 0.8rem; max-width: 100%; min-width: 0; }
 #tab-esc .sc-grp { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin-top: 12px; }
 #tab-esc .sc-auto { opacity: 0.75; }
+/* ── Crises ── */
+#tab-pcr .sc-foot { font-size: 11px; color: var(--muted); text-align: center; padding: 6px 0 14px; line-height: 1.6; }
+.cr-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px; }
+.cr-chip { min-height: 40px; padding: 8px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--card); color: var(--text); font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+.cr-chip.active { background: var(--red); border-color: var(--red); color: #fff; }
+.cr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+.cr-cell { background: var(--card); padding: 12px 8px; text-align: center; min-width: 0; }
+.cr-big { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; margin-top: 4px; }
+.cr-cell .cr-big { font-size: clamp(1.15rem, 6vw, 1.9rem); }
+.cr-mono { font-variant-numeric: tabular-nums; }
+.cr-dim { color: var(--muted); }
+.cr-warn { color: var(--orange); }
+.cr-alarm { color: var(--red); animation: cr-blink 1s steps(2, start) infinite; }
+@keyframes cr-blink { to { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .cr-alarm { animation: none; } }
+.cr-btns { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; align-items: center; }
+.cr-btn { flex: 1 1 calc(50% - 8px); min-height: 48px; padding: 8px 10px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.cr-btn b { margin-left: 4px; }
+.cr-btn:disabled { opacity: 0.4; cursor: default; }
+.cr-btn.cr-sm { flex: 0 0 auto; min-height: 40px; }
+.cr-primary { background: var(--accent); border-color: var(--accent); color: #fff; flex-basis: 100%; }
+.cr-red { border-color: var(--red); color: var(--red); }
+.cr-orange { border-color: var(--orange); color: var(--orange); }
+.cr-green { border-color: var(--green); color: var(--green); }
+.cr-ghost { flex: 0 0 auto; color: var(--muted); }
+.cr-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cr-watch { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.cr-watch .dose-label { flex: 1; }
+.cr-watch .cr-big { margin: 0; font-size: 1.5rem; }
+.cr-list { padding: 0 16px 14px 34px; font-size: 0.85rem; line-height: 1.5; }
+.cr-list li { margin-bottom: 6px; }
 #tab-esc .sc-foot { font-size: 11px; color: var(--muted); text-align: center; padding: 6px 0 14px; line-height: 1.6; }
 
 /* ── Mistura de soluções (js/mix.js) ── */
@@ -753,11 +784,11 @@ body {
   <div class="patient-row">
     <div class="field">
       <label>Peso (kg)</label>
-      <input type="number" id="weight" inputmode="decimal" placeholder="70" min="1" max="300" oninput="update()">
+      <input type="text" id="weight" inputmode="decimal" placeholder="70" min="1" max="300" oninput="update()">
     </div>
     <div class="field">
       <label>Altura (cm)</label>
-      <input type="number" id="height" inputmode="numeric" placeholder="170" min="50" max="250" oninput="update()">
+      <input type="text" id="height" inputmode="numeric" placeholder="170" min="50" max="250" oninput="update()">
     </div>
     <div class="field">
       <label>Sexo</label>
@@ -777,7 +808,7 @@ body {
     </div>
     <div class="field">
       <label>Idade</label>
-      <input type="number" id="age" inputmode="numeric" placeholder="45" min="1" max="120" oninput="update()">
+      <input type="text" id="age" inputmode="numeric" placeholder="45" min="1" max="120" oninput="update()">
     </div>
   </div>
   <!-- Pesos -->
@@ -804,17 +835,17 @@ body {
       <div class="drug-subtitle">Jejum e hematócrito</div></div></div>
       <div class="dose-table">
         <div class="dose-row"><span class="dose-label">Tempo de jejum</span><span class="dose-val">
-          <input type="number" id="jejum" class="hid-input" inputmode="decimal" placeholder="8" min="0" max="24" oninput="renderHid()"><span class="dose-unit"> h</span></span></div>
+          <input type="text" id="jejum" class="hid-input" inputmode="decimal" placeholder="8" min="0" max="24" oninput="renderHid()"><span class="dose-unit"> h</span></span></div>
         <div class="dose-row"><span class="dose-label">Ht inicial</span><span class="dose-val">
-          <input type="number" id="ht-i" class="hid-input" inputmode="decimal" placeholder="40" min="10" max="70" oninput="renderHid()"><span class="dose-unit"> %</span></span></div>
+          <input type="text" id="ht-i" class="hid-input" inputmode="decimal" placeholder="40" min="10" max="70" oninput="renderHid()"><span class="dose-unit"> %</span></span></div>
         <div class="dose-row"><span class="dose-label">Ht mínimo aceitável</span><span class="dose-val">
-          <input type="number" id="ht-f" class="hid-input" inputmode="decimal" placeholder="21" min="10" max="70" oninput="renderHid()"><span class="dose-unit"> %</span></span></div>
+          <input type="text" id="ht-f" class="hid-input" inputmode="decimal" placeholder="21" min="10" max="70" oninput="renderHid()"><span class="dose-unit"> %</span></span></div>
       </div>
     </div>
     <div id="hid-out"></div>
     <div id="mix-root"></div>
   </div>
-  <div class="tab-pane" id="tab-pcr"></div>
+  <div class="tab-pane" id="tab-pcr"><div id="crises-root"></div><div id="pcr-drugs"></div></div>
   <div class="tab-pane" id="tab-ped"></div>
   <div class="tab-pane" id="tab-lab">
     <div class="sec-hdr">Exames — Hemograma por idade</div>
@@ -822,9 +853,9 @@ body {
       <div class="drug-header"><div><div class="drug-name" style="color:var(--red)">Hb / Ht</div>
       <div class="drug-subtitle">Limite inferior por idade (Nathan &amp; Oski / Harriet Lane; adulto OMS)</div></div></div>
       <div class="dose-table">
-        <div class="dose-row"><span class="dose-label">Idade</span><span class="dose-val"><input type="number" id="lab-age" class="hid-input" inputmode="decimal" placeholder="anos" oninput="renderLab()"> <select id="lab-age-u" class="hid-input" style="width:auto" onchange="renderLab()"><option value="365">anos</option><option value="30.4">meses</option><option value="1">dias</option></select></span></div>
-        <div class="dose-row"><span class="dose-label">Hb</span><span class="dose-val"><input type="number" id="lab-hb" class="hid-input" inputmode="decimal" placeholder="12" oninput="renderLab()"><span class="dose-unit"> g/dL</span></span></div>
-        <div class="dose-row"><span class="dose-label">Ht</span><span class="dose-val"><input type="number" id="lab-ht" class="hid-input" inputmode="decimal" placeholder="36" oninput="renderLab()"><span class="dose-unit"> %</span></span></div>
+        <div class="dose-row"><span class="dose-label">Idade</span><span class="dose-val"><input type="text" id="lab-age" class="hid-input" inputmode="decimal" placeholder="anos" oninput="renderLab()"> <select id="lab-age-u" class="hid-input" style="width:auto" onchange="renderLab()"><option value="365">anos</option><option value="30.4">meses</option><option value="1">dias</option></select></span></div>
+        <div class="dose-row"><span class="dose-label">Hb</span><span class="dose-val"><input type="text" id="lab-hb" class="hid-input" inputmode="decimal" placeholder="12" oninput="renderLab()"><span class="dose-unit"> g/dL</span></span></div>
+        <div class="dose-row"><span class="dose-label">Ht</span><span class="dose-val"><input type="text" id="lab-ht" class="hid-input" inputmode="decimal" placeholder="36" oninput="renderLab()"><span class="dose-unit"> %</span></span></div>
       </div>
       <div id="lab-hb-out"></div>
     </div>
@@ -833,7 +864,7 @@ body {
       <div class="drug-header"><div><div class="drug-name" style="color:var(--accent)">Filtração Glomerular</div>
       <div class="drug-subtitle">CKD-EPI 2021 (sem raça) · Cockcroft-Gault · idade, sexo e peso do painel</div></div></div>
       <div class="dose-table">
-        <div class="dose-row"><span class="dose-label">Creatinina</span><span class="dose-val"><input type="number" id="lab-cr" class="hid-input" inputmode="decimal" placeholder="1.0" oninput="renderLab()"><span class="dose-unit"> mg/dL</span></span></div>
+        <div class="dose-row"><span class="dose-label">Creatinina</span><span class="dose-val"><input type="text" id="lab-cr" class="hid-input" inputmode="decimal" placeholder="1.0" oninput="renderLab()"><span class="dose-unit"> mg/dL</span></span></div>
       </div>
       <div id="lab-cr-out"></div>
     </div>
@@ -842,8 +873,8 @@ body {
       <div class="drug-header"><div><div class="drug-name" style="color:var(--orange)">HOMA</div>
       <div class="drug-subtitle">Resistência insulínica e função de célula β (jejum)</div></div></div>
       <div class="dose-table">
-        <div class="dose-row"><span class="dose-label">Glicemia</span><span class="dose-val"><input type="number" id="lab-gli" class="hid-input" inputmode="decimal" placeholder="90" oninput="renderLab()"><span class="dose-unit"> mg/dL</span></span></div>
-        <div class="dose-row"><span class="dose-label">Insulina</span><span class="dose-val"><input type="number" id="lab-ins" class="hid-input" inputmode="decimal" placeholder="10" oninput="renderLab()"><span class="dose-unit"> µU/mL</span></span></div>
+        <div class="dose-row"><span class="dose-label">Glicemia</span><span class="dose-val"><input type="text" id="lab-gli" class="hid-input" inputmode="decimal" placeholder="90" oninput="renderLab()"><span class="dose-unit"> mg/dL</span></span></div>
+        <div class="dose-row"><span class="dose-label">Insulina</span><span class="dose-val"><input type="text" id="lab-ins" class="hid-input" inputmode="decimal" placeholder="10" oninput="renderLab()"><span class="dose-unit"> µU/mL</span></span></div>
       </div>
       <div id="lab-homa-out"></div>
     </div>
@@ -914,7 +945,7 @@ body {
           <div class="v-arrow">=</div>
           <div class="v-dur-block">
             <div class="v-dur-label">duração</div>
-            <div class="v-dur-val v-sat-val"><input type="number" class="v-dur-input" id="vol-s-dur-val" value="5" min="1" max="1440" inputmode="numeric" aria-label="Duração em minutos" oninput="document.getElementById('vol-s-dur-slide').value=this.value;volCalc()"><span class="v-dur-unit">min</span></div>
+            <div class="v-dur-val v-sat-val"><input type="text" class="v-dur-input" id="vol-s-dur-val" value="5" min="1" max="1440" inputmode="numeric" aria-label="Duração em minutos" oninput="document.getElementById('vol-s-dur-slide').value=this.value;volCalc()"><span class="v-dur-unit">min</span></div>
           </div>
         </div>
       </div>
@@ -973,7 +1004,7 @@ body {
           <div class="v-arrow">=</div>
           <div class="v-dur-block">
             <div class="v-dur-label">duração</div>
-            <div class="v-dur-val v-man-val"><input type="number" class="v-dur-input" id="vol-m-dur-val" value="60" min="1" max="1440" inputmode="numeric" aria-label="Duração em minutos" oninput="document.getElementById('vol-m-dur-slide').value=this.value;volCalc()"><span class="v-dur-unit">min</span></div>
+            <div class="v-dur-val v-man-val"><input type="text" class="v-dur-input" id="vol-m-dur-val" value="60" min="1" max="1440" inputmode="numeric" aria-label="Duração em minutos" oninput="document.getElementById('vol-m-dur-slide').value=this.value;volCalc()"><span class="v-dur-unit">min</span></div>
           </div>
         </div>
       </div>
@@ -1078,7 +1109,7 @@ body {
     <span class="icon">📋</span>Escalas
   </button>
   <button class="nav-btn" onclick="nav('pcr',this)">
-    <span class="icon">🚨</span>PCR
+    <span class="icon">🚨</span>Crises
   </button>
   <button class="nav-btn" onclick="nav('ped',this)">
     <span class="icon">👶</span>Ped
@@ -1096,10 +1127,14 @@ body {
 <script src="js/scales.js"></script>
 <script src="js/bolus.js"></script>
 <script src="js/peds.js"></script>
+<script src="js/crises.js"></script>
 <script>
 /* ── utils ── */
-const W   = () => parseFloat(document.getElementById('weight').value) || 0;
-const H   = () => parseFloat(document.getElementById('height').value) || 0;
+/* aceita vírgula ou ponto decimal */
+const numVal = el => el ? parseFloat(String(el.value).replace(',', '.')) : NaN;
+const numId  = id => numVal(document.getElementById(id));
+const W   = () => numId('weight') || 0;
+const H   = () => numId('height') || 0;
 const f   = (n, d=1) => (isNaN(n)||!isFinite(n)||n<=0) ? '—' : (+n.toFixed(d)).toString();
 
 let modes = {};
@@ -1154,6 +1189,7 @@ function wByType(type) {
   switch(type) {
     case 'IBW': return Math.min(weights.ibw || t, t);
     case 'LBW': return Math.min(weights.lbw || weights.ibw || t, t);
+    case 'ABW': return Math.min(weights.abw || weights.ibw || t, t);
     default:    return t; // TBW
   }
 }
@@ -1203,6 +1239,7 @@ function update() {
   renderHid();
   renderLab();
   renderPCR();
+  if (window.CrisesUI) CrisesUI.refresh();
   if (typeof renderInfusion === 'function') renderInfusion();
   if (typeof renderScales === 'function') renderScales();
   if (typeof renderBolus === 'function') renderBolus();
@@ -1316,10 +1353,12 @@ function renderIOT() {
   ];
 
   let html = `<div class="disclaimer">⚠️ Uso exclusivo por médico habilitado. Valores de referência.</div>`;
+  html += `<div class="sec-hdr">Opioides</div>`;
+  for (const d of drugs.slice(0,2)) html += buildCard(d);
   html += `<div class="sec-hdr">Hipnóticos / Indução</div>`;
-  for (const d of drugs.slice(0,4)) html += buildCard(d);
+  for (const d of drugs.slice(2,6)) html += buildCard(d);
   html += `<div class="sec-hdr">Bloqueadores Neuromusculares</div>`;
-  for (const d of drugs.slice(4)) html += buildCard(d);
+  for (const d of drugs.slice(6)) html += buildCard(d);
   el.innerHTML = html;
 }
 
@@ -1438,7 +1477,7 @@ function renderAdj() {
             {l:'Dose máx absoluta', v:'10 ml', u:'= 5 mg'},
           ],
           iotNote:`<strong>Sempre + Atropina 0,015mg/kg:</strong> ${f(wt*0.015/0.5,2)} ml (0,5mg/ml)<br>Só com TOF 4 com fadiga (ASA 2023) — TOF &lt;4: preferir Sugamadex`,
-          badges:[{t:'Sempre + Atropina',c:'br'},{t:'TOF ≥2',c:'bw'},{t:'Máx 5mg',c:'bw'}],
+          badges:[{t:'Sempre + Atropina',c:'br'},{t:'Só TOF 4 c/ fadiga',c:'bw'},{t:'Máx 5mg',c:'bw'}],
         }})(),
         (() => { const wt = wByType('IBW'); return {
           id:'sug', wtype:'IBW', name:'Sugamadex', color:'var(--green)',
@@ -1563,11 +1602,12 @@ function renderAdj() {
           sub:'Corticoide — choque, insuf. adrenal, anafilaxia', conc:'100 mg/2ml ou 500mg pó', hasModes:false,
           iotRows:[
             {l:'Dose de estresse periop.', v:'50–100 mg', u:'IV bolus (repetir 8/8h)'},
-            {l:'Choque anafilático  200–500mg', v:'4–10 ml', u:'(50mg/ml) IV bolus'},
+            {l:'Choque anafilático  200–500mg — amp 100mg/2ml', v:'4–10 ml', u:'(50mg/ml) IV bolus'},
+            {l:'Choque anafilático  200–500mg — pó 500mg em 2ml', v:'0,8–2 ml', u:'(250mg/ml) IV bolus'},
             {l:'Insuf. adrenal / sepse', v:'200 mg/dia', u:'= 50mg 6/6h ou infusão'},
             {l:'Dose antiinflamatória  1–5 mg/kg', v:`${f(wt*1/50,1)}–${f(Math.min(wt*5,500)/50,1)} ml`, u:`= ${f(wt*1,0)}–${f(Math.min(wt*5,500),0)} mg (50mg/ml)`},
           ],
-          iotNote:`Amp 100mg/2ml (50mg/ml) ou pó 500mg reconstituído em 2ml<br>
+          iotNote:`Volumes em ml calculados para 50mg/ml (amp 100mg/2ml). <strong>Pó 500mg em 2ml = 250mg/ml (÷5 o volume)</strong><br>
           <strong>Infusão contínua sepse: 200mg em 48ml SF (4mg/ml) → 200mg/24h ≈ 2 ml/h</strong>`,
           badges:[{t:'Anafilaxia',c:'br'},{t:'Insuf. adrenal',c:'bg'},{t:'Sepse refratária',c:'bg'},{t:'Hiperglicemia',c:'bw'}],
         }})(),
@@ -1616,8 +1656,8 @@ function renderALMix() {
   const host = document.getElementById('almix-root');
   if (!host.firstChild) {
     const row = k => `<div class="dose-row" style="flex-wrap:wrap;gap:6px"><span class="dose-label" style="min-width:110px">${LA_MAX[k].name}</span><span class="dose-val">
-      <input type="number" id="lam-${k}-pct" class="hid-input" style="width:58px" inputmode="decimal" placeholder="%" min="0" step="any"><span class="dose-unit">% </span>
-      <input type="number" id="lam-${k}-ml" class="hid-input" style="width:58px" inputmode="decimal" placeholder="ml" min="0" step="any"><span class="dose-unit">ml</span>
+      <input type="text" id="lam-${k}-pct" class="hid-input" style="width:58px" inputmode="decimal" placeholder="%" min="0" step="any"><span class="dose-unit">% </span>
+      <input type="text" id="lam-${k}-ml" class="hid-input" style="width:58px" inputmode="decimal" placeholder="ml" min="0" step="any"><span class="dose-unit">ml</span>
       ${LA_MAX[k].doses.length > 1 ? `<label class="dose-unit" style="margin-left:6px"><input type="checkbox" id="lam-${k}-vaso"> epi</label>` : ''}</span></div>`;
     host.innerHTML = `<div class="sec-hdr">Soma de anestésicos locais (mistura)</div>
       <div class="drug-card"><div class="drug-header"><div><div class="drug-name" style="color:var(--red)">Fração da dose máxima</div>
@@ -1630,7 +1670,7 @@ function renderALMix() {
   }
   const w = W(), out = document.getElementById('lam-out');
   if (!w) { out.innerHTML = `<div class="dilution-note">Informe o peso no painel.</div>`; return; }
-  const v = id => parseFloat(document.getElementById(id).value) || 0;
+  const v = id => numId(id) || 0;
   const r = laMix(Object.keys(LA_MAX).map(key => ({ key, pct: v(`lam-${key}-pct`), ml: v(`lam-${key}-ml`), vaso: !!document.getElementById(`lam-${key}-vaso`)?.checked })), w);
   if (!r.rows.length) { out.innerHTML = ''; return; }
   const pctTot = r.total * 100, color = pctTot > 100 ? 'var(--red)' : pctTot > 80 ? 'var(--orange)' : 'var(--green)';
@@ -1855,7 +1895,7 @@ function renderVaso() {
     d => d<=5?'Inotrópico':d<=10?'↑DC moderado':'Alto débito'
   );
 
-  // Adrenalina: 1mg/ml → 1mg + 188ml SF → 60mcg/ml
+  // Adrenalina: 1mg/ml → 12mg + 188ml SF → 60mcg/ml
   const adre = mkVaso(
     'Adrenalina (Epinefrina)', 'var(--red)', 'Vasopressor/inotrópico — PCR / anafilaxia',
     60, 'mcg/kg/min',
@@ -1931,7 +1971,7 @@ function renderVaso() {
 ════════════════════════════════════════ */
 function renderPCR() {
   const w = W();
-  const el = document.getElementById('tab-pcr');
+  const el = document.getElementById('pcr-drugs');
 
   function row(l, v) {
     return `<div class="pcr-row"><span class="pcr-l">${l}</span><span class="pcr-v">${v}</span></div>`;
@@ -2061,9 +2101,9 @@ function infTable_wt(wt, rows, unitLabel) {
 function renderHid() {
   const el = document.getElementById('hid-out');
   const w = W();
-  const jejum = parseFloat(document.getElementById('jejum').value) || 0;
-  const htI = parseFloat(document.getElementById('ht-i').value) || 0;
-  const htF = parseFloat(document.getElementById('ht-f').value) || 0;
+  const jejum = numId('jejum') || 0;
+  const htI = numId('ht-i') || 0;
+  const htF = numId('ht-f') || 0;
 
   // Holliday-Segar: 4-2-1 rule
   function maintenance(kg) {
@@ -2215,6 +2255,7 @@ function volUpdateTimeDisplay(phase) {
 function volMlLiq(c, fl, d, factor) { return (c / 100) * fl * d * 1000 / factor; }
 
 function volBuildChart(sC, sF, sD, mC, mF, mD, factor) {
+  if (typeof Chart === 'undefined') return; // sem Chart.js: números continuam, só o gráfico some
   const cs = getComputedStyle(document.documentElement);
   const cY = cs.getPropertyValue('--yellow').trim();
   const cG = cs.getPropertyValue('--green').trim();
@@ -2273,7 +2314,6 @@ function volBuildChart(sC, sF, sD, mC, mF, mD, factor) {
 }
 
 function volCalc() {
-  if (typeof Chart === 'undefined') return;
   const tempEl = document.getElementById('vol-temp');
   if (!tempEl) return;
 
@@ -2301,7 +2341,8 @@ function volCalc() {
   document.getElementById('vol-m-flow-v').textContent = mF.toFixed(1);
 
   // CAM pela idade: MAC40 × 10^(−0,00269 × (idade − 40)); sem idade, assume 40
-  const age = parseFloat(document.getElementById('age').value) || 40;
+  const ageRaw = numId('age');
+  const age = Number.isFinite(ageRaw) ? ageRaw : 40;
   const mac = VOL_AGENTS[volCurrentAgent].mac40 * Math.pow(10, -0.00269 * (age - 40));
   document.getElementById('vol-age').textContent = age;
   document.getElementById('vol-mac').textContent = mac.toFixed(2);
@@ -2362,13 +2403,14 @@ function ckdEpi(cr, age, s) {
 const cockcroft = (cr, age, kg, s) => (140 - age) * kg / (72 * cr) * (s === 'F' ? 0.85 : 1);
 
 function renderLab() {
-  const v = id => parseFloat(document.getElementById(id).value) || 0;
+  const v = id => numId(id) || 0;
   const line = (l, val, color) => `<div class="dose-row"><span class="dose-label">${l}</span><span class="dose-val"${color ? ` style="color:${color}"` : ''}>${val}</span></div>`;
   const note = t => `<div class="dilution-note">${t}</div>`;
   const panelAge = v('age');
 
   // Hb / Ht
-  const days = v('lab-age') ? v('lab-age') * v('lab-age-u') : panelAge * 365;
+  const labAgeSet = document.getElementById('lab-age').value.trim() !== '';
+  const days = labAgeSet ? v('lab-age') * v('lab-age-u') : panelAge * 365;
   const hb = v('lab-hb'), ht = v('lab-ht');
   let o = '';
   if (days || document.getElementById('lab-age').value === '0') {
