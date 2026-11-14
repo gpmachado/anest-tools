@@ -64,7 +64,21 @@ sw.js        — service worker (offline cache)
 manifest.json — PWA manifest
 icon-192.png  — PWA icon
 icon-512.png  — PWA icon
+js/          — calculation modules (infusion, bolus, mix, scales, peds)
+test/        — automated tests (node --test)
 ```
+
+---
+
+## Testes
+
+As camadas de cálculo (`InfusionCalc`, `BolusCalc`, `MixCalc`, `ScalesCalc`, `PedsCalc`) têm testes automatizados em `test/*.test.js`, com o executor nativo do Node (`node:test`), sem dependências. Requer Node 20 ou mais recente:
+
+```bash
+node --test
+```
+
+O GitHub Actions (`.github/workflows/test.yml`) roda os mesmos testes a cada push e pull request. O autoteste no navegador (`index.html?teste`, resultado no console) continua cobrindo o que depende da página (pesos, abas, mistura de anestésicos locais).
 
 ---
 
