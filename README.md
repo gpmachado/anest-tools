@@ -66,7 +66,8 @@ manifest.json — PWA manifest
 icon-192.png  — PWA icon
 icon-512.png  — PWA icon
 js/          — calculation modules (drugs, infusion, bolus, mix, scales, peds, crises)
-               js/drugs.js = fonte única das drogas compartilhadas entre abas
+               js/drugs.js = fonte única de todas as drogas (doses, apresentações,
+               diluições, tabelas de infusão); as abas só leem dele
 test/        — automated tests (node --test)
 ```
 

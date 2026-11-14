@@ -43,7 +43,12 @@ test('pesos válidos, números positivos e infusões completas', () => {
       else if (v && typeof v === 'object') {
         if (v.kind === 'infusion') {
           assert.ok(v.rateUnit, `${at}: infusão sem rateUnit`);
-          assert.ok(v.rate || (v.rateMin && v.rateMax) || v.steps, `${at}: infusão sem taxa`);
+          assert.ok(v.rate || (v.rateMin && v.rateMax) || v.steps || (v.table && v.table.length), `${at}: infusão sem taxa`);
+          if (v.table) v.table.forEach((r, i) => assert.ok(r.rate > 0 && r.effect, `${at}.table[${i}]`));
+          if (v.seed) {
+            const toRateUnit = v.rateUnit.startsWith(v.seed.amountUnit) ? 1 : v.seed.amountUnit === 'mg' && v.rateUnit.startsWith('mcg') ? 1000 : NaN;
+            assert.strictEqual(v.seed.amount * toRateUnit / v.seed.volumeMl, v.prepConc, `${at}.seed: diluição ≠ prepConc`);
+          }
           if (v.rateMin) assert.ok(v.rateMin <= v.rateMax, `${at}: rateMin ≤ rateMax`);
           if (v.prep) assert.ok(v.prepConc > 0, `${at}: prep sem prepConc`);
         }
@@ -56,7 +61,7 @@ test('pesos válidos, números positivos e infusões completas', () => {
 
 test('concentrações declaradas batem com o texto', () => {
   for (const [k, d] of drugs) {
-    if (d.conc && d.concText) assert.ok(d.concText.startsWith(String(d.conc).replace('.', ',')), `${k}: ${d.conc} vs "${d.concText}"`);
+    if (d.conc && d.concText) assert.match(d.concText, new RegExp(`(^|\\s)${String(d.conc).replace('.', ',')} `), `${k}: ${d.conc} vs "${d.concText}"`);
   }
   assert.strictEqual(D.hcort.powder.conc / D.hcort.amp.conc, 5, 'hidrocortisona: pó 250 = 5× ampola 50');
 });
@@ -92,4 +97,21 @@ test('README: tabela de pesos coerente com drugs.js', () => {
   assert.strictEqual(D.roc.doses.adult.rsi.weight, 'TBW');
   assert.match(row('TBW'), /Sugamadex/);
   assert.ok(Object.values(D.sug.doses.adult).every((x) => x.weight === 'TBW'));
+});
+
+test('toda droga de drugs.js é usada por alguma aba (sem entrada morta)', () => {
+  const src = ['index.html', 'js/peds.js', 'js/crises.js', 'js/infusion.js'].map(read).join('\n');
+  for (const [k] of drugs) {
+    const used = src.includes(`D.${k}`) || src.includes(`D[k]`) && new RegExp(`['"]${k}['"]`).test(src);
+    assert.ok(used, `${k} não é usada em nenhuma aba`);
+  }
+});
+
+test('Infusão: presets de fábrica vêm de drugs.js', () => {
+  require('../js/drugs.js');
+  const I = load('infusion.js', 'InfusionCalc');
+  assert.strictEqual(I.SEED_PRESETS.length, 12);
+  for (const p of I.SEED_PRESETS) assert.ok(p.amount > 0 && p.volumeMl > 0, p.seedId);
+  const nora = I.SEED_PRESETS.find((p) => p.seedId === 'noradrenalina');
+  assert.strictEqual(nora.maxDose, D.nora.doses.adult.infusion.max);
 });

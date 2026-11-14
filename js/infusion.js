@@ -242,25 +242,27 @@
   }
 
   /**
-   * Factory defaults, derived from the dilutions and dose limits that already
-   * exist in the Vasoativos and Sedação tabs. A `maxDose` of null means the app
-   * had no stated maximum for that drug.
+   * Factory defaults, built from js/drugs.js (the standard dilution `seed` and the
+   * `max` of each infusion). A `maxDose` of null means no stated maximum.
    * @type {Array<Object>}
    */
-  const SEED_PRESETS = [
-    { seedId: 'noradrenalina',   name: 'Noradrenalina',   amount: 4,   amountUnit: 'mg',  volumeMl: 200, doseUnit: 'mcg', perKg: true,  timeUnit: 'min', weightType: 'TBW', maxDose: 0.5, maxRate: null },
-    { seedId: 'dopamina',        name: 'Dopamina',        amount: 250, amountUnit: 'mg',  volumeMl: 250, doseUnit: 'mcg', perKg: true,  timeUnit: 'min', weightType: 'TBW', maxDose: 20,  maxRate: null },
-    { seedId: 'dobutamina',      name: 'Dobutamina',      amount: 250, amountUnit: 'mg',  volumeMl: 250, doseUnit: 'mcg', perKg: true,  timeUnit: 'min', weightType: 'TBW', maxDose: 50,  maxRate: null },
-    { seedId: 'adrenalina',      name: 'Adrenalina',      amount: 12,  amountUnit: 'mg',  volumeMl: 200, doseUnit: 'mcg', perKg: true,  timeUnit: 'min', weightType: 'TBW', maxDose: null, maxRate: null },
-    { seedId: 'tridil',          name: 'Tridil (nitroglicerina)', amount: 50, amountUnit: 'mg', volumeMl: 250, doseUnit: 'mcg', perKg: false, timeUnit: 'min', weightType: 'TBW', maxDose: 200, maxRate: null },
-    { seedId: 'nipride',         name: 'Nipride (nitroprussiato)', amount: 50, amountUnit: 'mg', volumeMl: 250, doseUnit: 'mcg', perKg: true, timeUnit: 'min', weightType: 'TBW', maxDose: 10, maxRate: null },
-    { seedId: 'dexmedetomidina', name: 'Dexmedetomidina', amount: 200, amountUnit: 'mcg', volumeMl: 50,  doseUnit: 'mcg', perKg: true,  timeUnit: 'h',   weightType: 'IBW', maxDose: 1.4, maxRate: null },
-    { seedId: 'propofol',        name: 'Propofol 10 mg/mL', amount: 500, amountUnit: 'mg', volumeMl: 50, doseUnit: 'mg', perKg: true, timeUnit: 'h', weightType: 'LBW', maxDose: 4, maxRate: null },
-    { seedId: 'midazolam',       name: 'Midazolam',       amount: 15,  amountUnit: 'mg',  volumeMl: 15,  doseUnit: 'mg',  perKg: true,  timeUnit: 'h',   weightType: 'IBW', maxDose: 0.1, maxRate: null },
-    { seedId: 'fentanil',        name: 'Fentanil',        amount: 500, amountUnit: 'mcg', volumeMl: 100, doseUnit: 'mcg', perKg: false, timeUnit: 'h',   weightType: 'LBW', maxDose: 200, maxRate: null },
-    { seedId: 'remifentanil',    name: 'Remifentanil',    amount: 2,   amountUnit: 'mg',  volumeMl: 40,  doseUnit: 'mcg', perKg: true,  timeUnit: 'min', weightType: 'LBW', maxDose: null, maxRate: null },
-    { seedId: 'cetamina',        name: 'Cetamina',        amount: 100, amountUnit: 'mg',  volumeMl: 10,  doseUnit: 'mg',  perKg: true,  timeUnit: 'h',   weightType: 'TBW', maxDose: null, maxRate: null },
+  const Drugs = root.Drugs || (typeof require === 'function' ? require('./drugs.js') : null);
+  /** [drug key, circumstance, indication] of each ready-made infusion, in display order. */
+  const SEED_SOURCES = [
+    ['nora', 'adult', 'infusion'], ['dopa', 'adult', 'infusion'], ['dobut', 'adult', 'infusion'],
+    ['adre', 'adult', 'infusion'], ['tridil', 'adult', 'infusion'], ['nipride', 'adult', 'infusion'],
+    ['dex', 'adult', 'infusion'], ['pro', 'adult', 'infusion'], ['mid', 'adult', 'infusion'],
+    ['fen', 'adult', 'infusionFixed'], ['remi', 'adult', 'infusion'], ['cet', 'adult', 'infusion'],
   ];
+  const SEED_PRESETS = SEED_SOURCES.map(([k, ctx, ind]) => {
+    const inf = Drugs[k].doses[ctx][ind], sd = inf.seed;
+    const parts = inf.rateUnit.split('/'), mass = parts[0], per = parts[parts.length - 1]; // 'mcg/kg/min' → mcg, min
+    return {
+      seedId: sd.id, name: sd.name, amount: sd.amount, amountUnit: sd.amountUnit, volumeMl: sd.volumeMl,
+      doseUnit: mass, perKg: inf.rateUnit.includes('/kg/'), timeUnit: per, weightType: inf.weight || 'TBW',
+      maxDose: inf.max != null ? inf.max : null, maxRate: null,
+    };
+  });
 
   /**
    * Validates and normalizes a preset coming from storage or from an imported file.

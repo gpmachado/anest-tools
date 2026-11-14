@@ -2,7 +2,7 @@
 //     Exemplo: se o repo for github.com/seunome/drugcalc → '/drugcalc/'
 const REPO = '/anest-tools/';
 
-const CACHE = 'anest-tools-v14';
+const CACHE = 'anest-tools-v15';
 const ASSETS = [
   REPO,
   REPO + 'index.html',

@@ -214,14 +214,18 @@
 
     const D = root.Drugs; // dados compartilhados (js/drugs.js)
     const nf = (n) => String(n).replace('.', ',');
+    /** Linha pediátrica a partir de drugs.js: doses.peds[ind] + apresentação da droga. */
+    const pr = (k, ind, extra) => {
+      const X = D[k], d = X.doses.peds[ind];
+      return row(Object.assign({ name: X.name, perKg: d.perKg, max: d.max, unit: X.unit, conc: X.conc, concText: X.concText }, extra), kg);
+    };
     const at = D.atro.doses.peds.iot, sx = D.sux.doses.peds[months < 12 ? 'infant' : 'child'], sg = D.sug.doses.peds;
     const ad = D.adre.doses.peds, am = D.amio.doses.peds.arrest, bc = D.bicarb.doses.peds.arrest, ca = D.calGluc.doses.peds.hyperK;
     html += card('Indução / IOT', 'var(--purple)', '',
       row({ name: D.atro.name, perKg: at.perKg, unit: 'mg', max: at.max, conc: D.atro.conc, concText: D.atro.concText, note: `Pré-IOT: sem dose mínima. Bradicardia: mínimo ${nf(at.bradyMin)} mg (PALS).` }, kg) +
-      row({ name: 'Fentanil', perKg: [1, 2], unit: 'mcg', max: 100, conc: 50, concText: '50 mcg/mL' }, kg) +
-      row({ name: 'Cetamina', perKg: [1, 2], unit: 'mg', conc: 50, concText: '50 mg/mL' }, kg) +
-      row({ name: 'Propofol', perKg: [2, 3], unit: 'mg', conc: 10, concText: '10 mg/mL', note: 'Criança precisa de mais que adulto; reduzir se instável.' }, kg) +
-      row({ name: 'Midazolam', perKg: [0.1, 0.2], unit: 'mg', max: 5, conc: 5, concText: '5 mg/mL' }, kg) +
+      pr('fen', 'iot') + pr('cet', 'iot') +
+      pr('pro', 'iot', { note: 'Criança precisa de mais que adulto; reduzir se instável.' }) +
+      pr('mid', 'iot') +
       row({ name: `${D.roc.name} (sequência rápida)`, perKg: D.roc.doses.peds.rsi.perKg, unit: 'mg', conc: D.roc.conc, concText: D.roc.concText }, kg) +
       row({ name: D.sux.name, perKg: sx.perKg, unit: 'mg', max: sx.max, conc: D.sux.conc, concText: D.sux.concText, note: months < 12 ? `Lactente: ${nf(sx.perKg)} mg/kg.` : 'Criança: 1–1,5 mg/kg.' }, kg) +
       row({ name: `${D.sug.name} (reversão imediata)`, perKg: sg.immediate.perKg, unit: 'mg', conc: D.sug.conc, concText: D.sug.concText, note: `Rotina ${nf(sg.routine.perKg)} mg/kg (TOF ≥ 2), profundo ${nf(sg.deep.perKg)} mg/kg.` }, kg));
@@ -229,9 +233,9 @@
     html += card('PCR e arritmias', 'var(--red)', 'PALS 2020',
       row({ name: `${D.adre.name} EV/IO`, perKg: ad.arrest.perKg, unit: 'mg', max: ad.arrest.max, conc: ad.arrest.conc, concText: `${nf(ad.arrest.conc)} mg/mL (${ad.arrest.prep})`, note: 'A cada 3–5 min.' }, kg) +
       row({ name: `${D.amio.name} (FV/TV sem pulso)`, perKg: am.perKg, unit: 'mg', max: am.max, conc: D.amio.conc, concText: D.amio.concText, note: `Repetir até 3 doses (${nf(am.perKg * 3)} mg/kg).` }, kg) +
-      row({ name: 'Lidocaína (alternativa)', perKg: 1, unit: 'mg', max: 100, conc: 20, concText: '2% = 20 mg/mL' }, kg) +
-      row({ name: 'Adenosina 1ª dose', perKg: 0.1, unit: 'mg', max: 6, conc: 3, concText: '3 mg/mL', note: 'Bolus rápido + flush.' }, kg) +
-      row({ name: 'Adenosina 2ª dose', perKg: 0.2, unit: 'mg', max: 12, conc: 3, concText: '3 mg/mL' }, kg) +
+      pr('lido', 'arrhythmia', { name: 'Lidocaína (alternativa)' }) +
+      pr('adenosine', 'first', { name: 'Adenosina 1ª dose', note: 'Bolus rápido + flush.' }) +
+      pr('adenosine', 'second', { name: 'Adenosina 2ª dose' }) +
       row({ name: 'Desfibrilação', perKg: [2, 4], unit: 'J', max: 200, note: '1º choque 2 J/kg, depois 4 J/kg (até 10 J/kg).' }, kg) +
       row({ name: 'Cardioversão sincronizada', perKg: [0.5, 1], unit: 'J', note: 'Se falhar: 2 J/kg.' }, kg) +
       (months < bc.neonateMonths
@@ -243,17 +247,17 @@
     html += card('Emergências', 'var(--orange)', '',
       row({ name: 'Cristaloide (bolus)', perKg: [10, 20], unit: 'mL', note: 'Reavaliar após cada bolus.' }, kg) +
       row({ name: `${D.adre.name} IM (anafilaxia)`, perKg: ad.anaphylaxisIM.perKg, unit: 'mg', max: ad.anaphylaxisIM.max, conc: D.adre.conc, concText: `${D.adre.concText}, sem diluir` }, kg) +
-      row({ name: 'Midazolam IM/intranasal (convulsão)', perKg: 0.2, unit: 'mg', max: 10, conc: 5, concText: '5 mg/mL' }, kg) +
-      row({ name: 'Diazepam EV (convulsão)', perKg: 0.3, unit: 'mg', max: 10, conc: 5, concText: '5 mg/mL' }, kg) +
-      row({ name: 'Levetiracetam (estado de mal)', perKg: 60, unit: 'mg', max: 4500, note: 'Infundir em 10–15 min.' }, kg) +
-      row({ name: 'Fenitoína (estado de mal)', perKg: 20, unit: 'mg', max: 1500, conc: 50, concText: '50 mg/mL', note: 'Máx 1 mg/kg/min (50 mg/min).' }, kg) +
-      row({ name: 'Sulfato de magnésio (broncoespasmo)', perKg: [25, 50], unit: 'mg', max: 2000, conc: 100, concText: '10% = 100 mg/mL', note: 'Em 20 min.' }, kg) +
-      row({ name: 'Metilprednisolona', perKg: [1, 2], unit: 'mg', max: 60 }, kg) +
-      row({ name: 'Naloxona (reversão completa)', perKg: 0.1, unit: 'mg', max: 2, conc: 0.4, concText: '0,4 mg/mL', note: 'Depressão respiratória por opioide: começar com 0,001–0,005 mg/kg.' }, kg) +
-      row({ name: 'Flumazenil', perKg: 0.01, unit: 'mg', max: 0.2, conc: 0.1, concText: '0,1 mg/mL' }, kg) +
-      row({ name: 'Ondansetrona', perKg: 0.1, unit: 'mg', max: 4, conc: 2, concText: '2 mg/mL' }, kg) +
-      row({ name: 'Dexametasona (NVPO)', perKg: 0.15, unit: 'mg', max: 8, conc: 4, concText: '4 mg/mL' }, kg) +
-      row({ name: 'Dipirona', perKg: [15, 20], unit: 'mg', max: 1000, conc: 500, concText: '500 mg/mL' }, kg));
+      pr('mid', 'seizure', { name: 'Midazolam IM/intranasal (convulsão)' }) +
+      pr('diazepam', 'seizure', { name: 'Diazepam EV (convulsão)' }) +
+      pr('levetiracetam', 'status', { name: 'Levetiracetam (estado de mal)', note: 'Infundir em 10–15 min.' }) +
+      pr('phenytoin', 'status', { name: 'Fenitoína (estado de mal)', note: 'Máx 1 mg/kg/min (50 mg/min).' }) +
+      pr('mgso4', 'bronchospasm', { name: 'Sulfato de magnésio (broncoespasmo)', concText: '10% = 100 mg/mL', note: 'Em 20 min.' }) +
+      pr('mpred', 'bronchospasm') +
+      pr('naloxone', 'full', { name: 'Naloxona (reversão completa)', note: 'Depressão respiratória por opioide: começar com 0,001–0,005 mg/kg.' }) +
+      pr('flumazenil', 'reversal') +
+      pr('ond', 'ponv') +
+      pr('dexa', 'ponv', { name: 'Dexametasona (NVPO)' }) +
+      pr('dip', 'bolus', { name: 'Dipirona' }));
 
     const m = maintenance(kg);
     html += card('Fluidos e volemia', 'var(--teal)', '',
